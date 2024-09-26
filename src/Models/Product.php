@@ -19,6 +19,8 @@ class Product extends Model implements HasMedia
 
     protected $table = 'sn_products';
 
+    protected $guarded = [];
+
     protected $casts = [
         'sku_type' => Enums\ProductSkuType::class,
         'original_price' => MoneyCast::class,
@@ -28,7 +30,6 @@ class Product extends Model implements HasMedia
         'params' => 'array',
         'options' => 'array',
     ];
-
 
     public function registerMediaConversions(?Media $media = null): void
     {
@@ -60,6 +61,12 @@ class Product extends Model implements HasMedia
     public function scopeHidden($query)
     {
         return $query->where('status', 'hidden');
+    }
+
+
+    public function stockUnit()
+    {
+        return $this->belongsTo(UnitRepository::class, 'stock_unit', 'name');
     }
 
 

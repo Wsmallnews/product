@@ -3,7 +3,9 @@
 namespace Wsmallnews\Product;
 
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Forms\Components;
+use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Product\Models;
 use Wsmallnews\Support\Forms\Fields\Arrange;
@@ -80,6 +82,58 @@ class FieldRepository
     }
 
 
+    /**
+     * 产品库存类型
+     *
+     * @return Components\TextInput
+     */
+    public static function stockType()
+    {
+        return Components\Radio::make('stock_type')
+        ->label('库存类型')
+        ->options(Enums\ProductStockType::class)
+            ->default(Enums\ProductStockType::Stock->value)
+            ->live()
+            ->required();
+    }
+
+
+    /**
+     * 产品基础库存单位
+     *
+     * @return Components\TextInput
+     */
+    public static function stockUnit()
+    {
+        return Components\Select::make('stock_unit')
+        ->relationship(name: 'stockUnit', titleAttribute: 'name', modifyQueryUsing: fn(Builder $query) => $query)      // @sn todo 这里要考虑 scope 的问题
+            ->createOptionForm([
+                Components\TextInput::make('name')->label('单位名称')->placeholder('请输入单位名称')->required(),
+            ])
+            ->createOptionUsing(function (array $data) {
+                return $data['name'];                   // 这里商品直接保存的是单位，不是 id
+            })
+            ->live()
+            ->label('基础库存单位')
+            ->placeholder('选择基础库存单位')
+            ->native(false)
+            ->required();
+    }
+
+
+    /**
+     * 产品显示销量
+     *
+     * @return Components\TextInput
+     */
+    public static function showSales()
+    {
+        return Components\TextInput::make('show_sales')
+            ->integer()
+            ->suffix(fn(Get $get): ?string => $get('stock_unit'))
+            ->label('显示销量');
+    }
+
 
     /**
      * sku 类型
@@ -92,6 +146,7 @@ class FieldRepository
             ->label('规格')
             ->options(Enums\ProductSkuType::class)
             ->default(Enums\ProductSkuType::Single->value)
+            // ->afterStateUpdated(fn(Set $set, ?string $state) => $set('skuPrice.sku_type', $state))
             ->live()
             ->inline();
     }
@@ -106,9 +161,11 @@ class FieldRepository
                 static::originalPrice()->columnSpan(1),
                 static::costPrice()->columnSpan(1),
                 static::price()->columnSpan(1),
-                static::stock()->columnSpan(1),
+                static::stock()->visible(fn (Get $get): bool => $get('../stock_type') == Enums\ProductStockType::Stock->value)->columnSpan(1),
                 static::weight()->columnSpan(1),
                 static::productSn()->columnSpan(1),
+                Components\Hidden::make('status')->default(Enums\ProductStatus::Up->value),
+                Components\Hidden::make('sku_type')->default(Enums\ProductSkuType::Single->value),
             ])
             ->columns(3)
             ->columnSpanFull();
@@ -130,9 +187,17 @@ class FieldRepository
                     'relationship' => 'skuPrices',
                     'savingUsing' => function ($record, $recursion) {       // 处理 recursions 自定义字段
                         $recursion['product_sku_text'] = $recursion['arrange_texts'] ?? [];
-                        unset($recursion['arrange_texts']);     // 删除原始字段
+                        $recursion['product_sn'] = $recursion['product_sn'] ?? null;
+                        $recursion['image'] = $recursion['image'] ?? null;
+                        $recursion['sku_type'] = $record?->sku_type ?: Enums\ProductSkuType::Single->value;
+                        $recursion['original_price'] = $recursion['original_price'] ?? 0;
+                        $recursion['cost_price'] = $recursion['cost_price'] ?? 0;
+                        $recursion['price'] = $recursion['price'] ?? 0;
+                        $recursion['stock'] = $recursion['stock'] ?? 0;
+                        $recursion['weight'] = $recursion['weight'] ?? 0;
+                        $recursion['status'] = $recursion['status'] ?? Enums\SkuPriceStatus::Up;
 
-                        // $recursion['sku_type'] = $record->sku_type;
+                        unset($recursion['arrange_texts']);     // 删除原始字段
                         return $recursion;
                     }
                 ],
@@ -163,53 +228,6 @@ class FieldRepository
             ->columnSpanFull();
     }
 
-
-    /**
-     * 产品库存类型
-     *
-     * @return Components\TextInput
-     */
-    public static function stockType()
-    {
-        return Components\Radio::make('stock_type')
-            ->label('库存类型')
-            ->options(Enums\ProductStockType::class)
-            ->default(Enums\ProductStockType::Stock->value)
-            ->required();
-    }
-
-
-    /**
-     * 产品基础库存单位
-     *
-     * @return Components\TextInput
-     */
-    public static function stockUnit()
-    {
-        return Components\Select::make('stock_unit')
-            ->label('基础库存单位')
-            ->placeholder('选择基础库存单位')
-            ->options(Models\UnitRepository::all()->pluck('name', 'id'))
-            ->native(false)
-            ->required();
-    }
-
-
-    /**
-     * 产品显示销量
-     *
-     * @return Components\TextInput
-     */
-    public static function showSales()
-    {
-        return Components\TextInput::make('show_sales')
-        ->label('显示销量');
-    }
-
-
-
-
-    
 
 
     // /**
@@ -255,6 +273,7 @@ class FieldRepository
     public static function richContent()
     {
         return Components\RichEditor::make('content')
+            ->fileAttachmentsDirectory(config('sn-product.image_directory'))
             ->label('商品详情');
     }
 
@@ -267,6 +286,7 @@ class FieldRepository
     public static function markdownContent()
     {
         return Components\MarkdownEditor::make('content')
+            ->fileAttachmentsDirectory(config('sn-product.image_directory'))
             ->label('商品详情');
     }
 
@@ -349,6 +369,8 @@ class FieldRepository
     public static function stock()
     {
         return Components\TextInput::make('stock')
+            ->integer()
+            ->suffix(fn(Get $get): ?string => $get('../stock_unit'))
             ->label('库存');
     }
 

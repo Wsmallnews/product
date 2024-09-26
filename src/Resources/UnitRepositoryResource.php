@@ -37,7 +37,7 @@ class UnitRepositoryResource extends Resource
             ->schema([
                 Forms\Components\Section::make()
                     ->schema([
-                        Forms\Components\TextInput::make('name')->label('单位名称')->placeholder('请输入属性名称')->required()->columnSpan(1),
+                        Forms\Components\TextInput::make('name')->label('单位名称')->placeholder('请输入单位名称')->required()->columnSpan(1),
                         Forms\Components\TextInput::make('order_column')->label('排序')->integer()
                             ->placeholder('正序排列')
                             ->rules(['integer', 'min:0'])

@@ -32,9 +32,16 @@ class NormalLayout implements LayoutInterface
                                 ])->columns(2),
 
                             
-                            Components\Section::make('规格价格')
+                            Components\Section::make('规格库存')
                                 ->schema([
-                                    FieldRepository::skuType()->columnSpanFull(),
+                                    FieldRepository::stockType()->columnSpan(1),
+                                    FieldRepository::stockUnit()->columnSpan(1),
+                                    FieldRepository::showSales()->columnSpan(1),
+
+
+                                    FieldRepository::skuType()
+                                        ->disabledOn(['edit'])      // 编辑时禁止修改 规格类型
+                                        ->columnSpanFull(),
 
                                     FieldRepository::skuSimple()
                                         ->visible(function (Get $get) {
@@ -48,12 +55,10 @@ class NormalLayout implements LayoutInterface
                                         ->columnSpanFull(),
                                 ])->columns(2),
 
-                            Components\Section::make('库存销量')
-                                ->schema([
-                                    FieldRepository::stockType()->columnSpan(1),
-                                    FieldRepository::stockUnit()->columnSpan(1),
-                                    FieldRepository::showSales()->columnSpan(1),
-                                ])->columns(2),
+                            // Components\Section::make('库存销量')
+                            //     ->schema([
+                                    
+                            //     ])->columns(2),
 
                             Components\Section::make('参数详情')
                                 ->schema([

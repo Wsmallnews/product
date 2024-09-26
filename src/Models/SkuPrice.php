@@ -11,6 +11,8 @@ class SkuPrice extends Model
 {
 
     protected $table = 'sn_product_sku_prices';
+    
+    protected $guarded = [];
 
     protected $casts = [
         'product_sku_ids' => ImplodeCast::class,
@@ -21,9 +23,6 @@ class SkuPrice extends Model
         'price' => MoneyCast::class,
         'status' => Enums\SkuPriceStatus::class,
     ];
-
-    protected $guarded = [];
-
 
     public function scopeUp($query)
     {

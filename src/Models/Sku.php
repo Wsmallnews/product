@@ -8,11 +8,10 @@ class Sku extends Model
 {
 
     protected $table = 'sn_product_skus';
-
-    protected $casts = [
-    ];
-
+    
     protected $guarded = [];
+
+    protected $casts = [];
 
     public $timestamps = false;
 

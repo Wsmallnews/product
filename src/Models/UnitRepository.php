@@ -9,6 +9,8 @@ class UnitRepository extends Model
 
     protected $table = 'sn_product_unit_repositories';
 
+    protected $guarded = [];
+
     protected $casts = [
     ];
 
