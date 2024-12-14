@@ -45,6 +45,6 @@ const defaultOptions = {
 
 compile({
     ...defaultOptions,
-    entryPoints: [],
-    outfile: '',
+    entryPoints: ['./resources/js/livewire/products/detail.js'],
+    outfile: './resources/dist/livewire/products-detail.js',
 })

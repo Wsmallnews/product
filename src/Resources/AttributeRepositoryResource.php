@@ -19,9 +19,9 @@ class AttributeRepositoryResource extends Resource
 {
     protected static ?string $model = AttributeRepository::class;
 
-    protected static ?string $navigationGroup = '产品管理组';
-    protected static ?string $navigationLabel = '属性库管理';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = '产品管理';
+    protected static ?string $navigationLabel = '属性库';
+    protected static ?string $navigationIcon = 'heroicon-s-rectangle-group';
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -31,6 +31,12 @@ class AttributeRepositoryResource extends Resource
     protected static ?string $slug = '/products/attribute-repositories';
 
     protected static ?int $navigationSort = 2;
+
+
+    public static function setAttribute($key, $value)
+    {
+        self::$$key = $value;
+    }
 
     public static function form(Form $form): Form
     {
@@ -127,7 +133,7 @@ class AttributeRepositoryResource extends Resource
                     ->sortable()
                     ->toggleable(),
             ])
-                
+
             ->searchPlaceholder('请输入关键字')
             ->filters([
                 Tables\Filters\Filter::make('is_require')

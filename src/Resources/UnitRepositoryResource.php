@@ -16,9 +16,9 @@ class UnitRepositoryResource extends Resource
 {
     protected static ?string $model = UnitRepository::class;
 
-    protected static ?string $navigationGroup = '产品管理组';
-    protected static ?string $navigationLabel = '单位库管理';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = '产品管理';
+    protected static ?string $navigationLabel = '单位库';
+    protected static ?string $navigationIcon = 'heroicon-c-rectangle-stack';
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -29,7 +29,10 @@ class UnitRepositoryResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-
+    public static function setAttribute($key, $value)
+    {
+        self::$$key = $value;
+    }
 
     public static function form(Form $form): Form
     {

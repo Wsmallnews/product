@@ -4,6 +4,9 @@ namespace Wsmallnews\Product\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -11,10 +14,13 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Support\Casts\MoneyCast;
+use Wsmallnews\Support\Models\Traits\Scopeable;
 
 class Product extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
+    use Scopeable;
     use InteractsWithMedia;
 
     protected $table = 'sn_products';
@@ -47,7 +53,10 @@ class Product extends Model implements HasMedia
         // $this->addMediaCollection('my-collection');
     }
 
-
+    public function scopeShow($query)
+    {
+        return $query->whereIn('status', ['up', 'hidden']);
+    }
 
     public function scopeUp($query)
     {
@@ -64,25 +73,29 @@ class Product extends Model implements HasMedia
     }
 
 
-    public function stockUnit()
+    public function stockUnit(): BelongsTo
     {
         return $this->belongsTo(UnitRepository::class, 'stock_unit', 'name');
     }
 
 
-    public function skus()
+    public function skus(): HasMany
     {
-        return $this->hasMany(Sku::class, 'product_id', 'id')->where('parent_id', 0);
+        return $this->hasMany(Sku::class, 'product_id', 'id')->where('parent_id', 0)->orderBy('order_column', 'desc')->orderBy('id', 'asc');
     }
 
+    public function attributes(): HasMany
+    {
+        return $this->hasMany(Attribute::class, 'product_id')->where('attribute_parent_id', 0)->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+    }
 
-    public function skuPrices()
+    public function skuPrices(): HasMany
     {
         return $this->hasMany(SkuPrice::class, 'product_id');
     }
 
 
-    public function skuPrice()
+    public function skuPrice(): HasOne
     {
         return $this->skuPrices()->one()->oldestOfMany();
     }

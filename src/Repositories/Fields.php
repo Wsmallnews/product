@@ -1,16 +1,15 @@
 <?php
 
-namespace Wsmallnews\Product;
+namespace Wsmallnews\Product\Repositories;
 
 use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Forms\Components;
 use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Enums;
-use Wsmallnews\Product\Models;
+use Wsmallnews\Product\Product;
 use Wsmallnews\Support\Forms\Fields\Arrange;
 
-class FieldRepository
+class Fields
 {
 
     /**
@@ -50,7 +49,7 @@ class FieldRepository
     {
         return Components\FileUpload::make('image')->label('产品主图')
             ->image()
-            ->directory(config('sn-product.image_directory'))
+            ->directory(Product::getImageDirectory())
             ->required()
             ->openable()
             ->downloadable()
@@ -68,7 +67,7 @@ class FieldRepository
     {
         return Components\FileUpload::make('images')->label('产品轮播图')
             ->image()
-            ->directory(config('sn-product.image_directory'))
+            ->directory(Product::getImageDirectory())
             ->required()
             ->multiple()
             ->openable()
@@ -171,7 +170,7 @@ class FieldRepository
             ->columnSpanFull();
     }
 
-    
+
 
     public static function skuMultiple()
     {
@@ -193,8 +192,8 @@ class FieldRepository
                         $recursion['original_price'] = $recursion['original_price'] ?? 0;
                         $recursion['cost_price'] = $recursion['cost_price'] ?? 0;
                         $recursion['price'] = $recursion['price'] ?? 0;
-                        $recursion['stock'] = $recursion['stock'] ?? 0;
-                        $recursion['weight'] = $recursion['weight'] ?? 0;
+                        $recursion['stock'] = $recursion['stock'] ? intval($recursion['stock']) : 0;
+                        $recursion['weight'] = $recursion['weight'] ? floatval($recursion['weight']) : 0;
                         $recursion['status'] = $recursion['status'] ?? Enums\SkuPriceStatus::Up;
 
                         unset($recursion['arrange_texts']);     // 删除原始字段
@@ -203,28 +202,57 @@ class FieldRepository
                 ],
             ])
             ->arrangeToRecursionKey('product_sku_ids')
-            ->tableFields([
-                // [
-                //     'label' => '图片',
-                //     'field' => 'image',
-                //     'default' => '',
-                // ],
-                [
-                    'label' => '成本价',
-                    'field' => 'cost_price',
+            ->tableFields(function (Get $get) {
+                $tableFields = [
+                    // [
+                    //     'label' => '图片',
+                    //     'field' => 'image',
+                    //     'default' => '',
+                    // ],
+                    [
+                        'label' => '原价',
+                        'field' => 'original_price',
+                        'default' => 0,
+                    ],
+                    [
+                        'label' => '成本价',
+                        'field' => 'cost_price',
+                        'default' => 0,
+                    ],
+                    [
+                        'label' => '售价',
+                        'field' => 'price',
+                        'default' => 0,
+                    ],
+                ];
+
+                if ($get('stock_type') == Enums\ProductStockType::Stock->value) {
+                    $tableFields[] = [
+                        'label' => '库存',
+                        'field' => 'stock',
+                        'default' => 0,
+                        'suffix' => $get('stock_unit')
+                    ];
+                }
+                $tableFields[] = [
+                    'label' => '重量',
+                    'field' => 'weight',
                     'default' => 0,
-                ],
-                [
-                    'label' => '售价',
-                    'field' => 'price',
-                    'default' => 0,
-                ],
-            ])
-            ->tableFieldsView('sn-support::arrange.table-fields')
+                ];
+                $tableFields[] = [
+                    'label' => '货号',
+                    'field' => 'product_sn',
+                    'default' => null,
+                ];
+
+                return $tableFields;
+            })
+            ->tableFieldsView('sn-product::arrange.table-fields')
             ->arrangePlaceholder('请填写规格名')
             ->arrangeChildPlaceholder('请填写子规格名')
             ->addActionLabel('添加规格')
             ->addChildActionLabel('添加子规格')
+            ->required()
             ->columnSpanFull();
     }
 
@@ -261,6 +289,7 @@ class FieldRepository
             ->valueLabel('参数值')
             ->valuePlaceholder('请输入参数值')
             ->addActionLabel('添加参数')
+            ->required()
             ->reorderable();
     }
 
@@ -273,7 +302,7 @@ class FieldRepository
     public static function richContent()
     {
         return Components\RichEditor::make('content')
-            ->fileAttachmentsDirectory(config('sn-product.image_directory'))
+            ->fileAttachmentsDirectory(Product::getImageDirectory())
             ->label('商品详情');
     }
 
@@ -286,7 +315,7 @@ class FieldRepository
     public static function markdownContent()
     {
         return Components\MarkdownEditor::make('content')
-            ->fileAttachmentsDirectory(config('sn-product.image_directory'))
+            ->fileAttachmentsDirectory(Product::getImageDirectory())
             ->label('商品详情');
     }
 
@@ -323,7 +352,8 @@ class FieldRepository
     public static function originalPrice()
     {
         return Components\TextInput::make('original_price')
-        ->label('原价')
+            ->label('原价')
+            ->suffix(currency_symbol(Product::getCurrency()))
             ->numeric()
             ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
             ->required();
@@ -338,7 +368,8 @@ class FieldRepository
     public static function costPrice()
     {
         return Components\TextInput::make('cost_price')
-        ->label('成本价')
+            ->label('成本价')
+            ->suffix(currency_symbol(Product::getCurrency()))
             ->helperText('用户无法看到成本价.')
             ->numeric()
             ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
@@ -355,6 +386,7 @@ class FieldRepository
     {
         return Components\TextInput::make('price')
             ->label('售卖价')
+            ->suffix(currency_symbol(Product::getCurrency()))
             ->numeric()
             ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
             ->required();

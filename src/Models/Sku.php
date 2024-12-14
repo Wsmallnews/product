@@ -18,6 +18,6 @@ class Sku extends Model
 
     public function children()
     {
-        return $this->hasMany(Sku::class, 'parent_id');
+        return $this->hasMany(Sku::class, 'parent_id')->orderBy('order_column', 'desc')->orderBy('id', 'asc');
     }
 }

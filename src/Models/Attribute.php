@@ -16,6 +16,12 @@ class Attribute extends Model
 
     public function children()
     {
-        return $this->hasMany(self::class, 'parent_id');
+        return $this->hasMany(self::class, 'parent_id')->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+    }
+
+
+    public function attributeRepository()
+    {
+        return $this->belongsTo(AttributeRepository::class, 'attribute_id', 'id');
     }
 }

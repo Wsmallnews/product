@@ -11,10 +11,14 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportTesting\Testable;
+use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Wsmallnews\Product\Commands\ProductCommand;
+use Wsmallnews\Product\Components\ProductList;
+use Wsmallnews\Product\Components\ProductSku;
+use Wsmallnews\Product\Components\ProductDetail;
 use Wsmallnews\Product\Testing\TestsProduct;
 
 class ProductServiceProvider extends PackageServiceProvider
@@ -95,6 +99,12 @@ class ProductServiceProvider extends PackageServiceProvider
             // }
         }
 
+        Livewire::component('sn-product-list', ProductList::class);
+
+        Livewire::component('sn-product-sku', ProductSku::class);
+
+        Livewire::component('sn-product-detail', ProductDetail::class);
+
         // Testing
         Testable::mixin(new TestsProduct);
     }
@@ -157,7 +167,7 @@ class ProductServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            'create_sn_order_table',
+            // 'create_sn_order_table',
         ];
     }
 }

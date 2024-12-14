@@ -36,7 +36,7 @@ class ProductPlugin implements Plugin
 
     public function getId(): string
     {
-        return 'sn_product';
+        return 'sn-product';
     }
 
 
@@ -57,6 +57,5 @@ class ProductPlugin implements Plugin
 
     public function boot(Panel $panel): void
     {
-        //
     }
 }
