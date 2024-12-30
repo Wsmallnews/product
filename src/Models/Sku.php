@@ -2,13 +2,13 @@
 
 namespace Wsmallnews\Product\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Wsmallnews\Support\Models\SupportModel;
 
-class Sku extends Model
+class Sku extends SupportModel
 {
 
     protected $table = 'sn_product_skus';
-    
+
     protected $guarded = [];
 
     protected $casts = [];

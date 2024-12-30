@@ -2,11 +2,11 @@
 
 namespace Wsmallnews\Product\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Wsmallnews\Product\Enums\AttributeStatus;
 use Wsmallnews\Support\Casts\MoneyCast;
+use Wsmallnews\Support\Models\SupportModel;
 
-class AttributeRepository extends Model
+class AttributeRepository extends SupportModel
 {
 
     protected $table = 'sn_product_attribute_repositories';

@@ -14,9 +14,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Enums\AttributeStatus;
 use Wsmallnews\Product\Models\AttributeRepository;
 use Wsmallnews\Product\Resources\AttributeRepositoryResource\Pages;
+use Wsmallnews\Support\Traits\Resources\SetResource;
 
 class AttributeRepositoryResource extends Resource
 {
+    use SetResource;
+
     protected static ?string $model = AttributeRepository::class;
 
     protected static ?string $navigationGroup = '产品管理';
@@ -32,11 +35,6 @@ class AttributeRepositoryResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-
-    public static function setAttribute($key, $value)
-    {
-        self::$$key = $value;
-    }
 
     public static function form(Form $form): Form
     {

@@ -2,16 +2,16 @@
 
 namespace Wsmallnews\Product\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Support\Casts\ImplodeCast;
 use Wsmallnews\Support\Casts\MoneyCast;
+use Wsmallnews\Support\Models\SupportModel;
 
-class SkuPrice extends Model
+class SkuPrice extends SupportModel
 {
 
     protected $table = 'sn_product_sku_prices';
-    
+
     protected $guarded = [];
 
     protected $casts = [

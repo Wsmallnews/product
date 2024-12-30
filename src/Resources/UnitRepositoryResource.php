@@ -11,9 +11,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Models\UnitRepository;
 use Wsmallnews\Product\Resources\UnitRepositoryResource\Pages;
 use Wsmallnews\Product\Resources\UnitRepositoryResource\RelationManagers;
+use Wsmallnews\Support\Traits\Resources\SetResource;
 
 class UnitRepositoryResource extends Resource
 {
+    use SetResource;
+
     protected static ?string $model = UnitRepository::class;
 
     protected static ?string $navigationGroup = '产品管理';
@@ -28,11 +31,6 @@ class UnitRepositoryResource extends Resource
     protected static ?string $slug = '/products/unit-repositories';
 
     protected static ?int $navigationSort = 3;
-
-    public static function setAttribute($key, $value)
-    {
-        self::$$key = $value;
-    }
 
     public static function form(Form $form): Form
     {

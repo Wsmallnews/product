@@ -3,7 +3,6 @@
 namespace Wsmallnews\Product\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -14,13 +13,12 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Support\Casts\MoneyCast;
-use Wsmallnews\Support\Models\Traits\Scopeable;
+use Wsmallnews\Support\Models\SupportModel;
 
-class Product extends Model implements HasMedia
+class Product extends SupportModel implements HasMedia
 {
     use HasFactory;
     use SoftDeletes;
-    use Scopeable;
     use InteractsWithMedia;
 
     protected $table = 'sn_products';

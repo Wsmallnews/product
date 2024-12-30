@@ -2,9 +2,9 @@
 
 namespace Wsmallnews\Product\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Wsmallnews\Support\Models\SupportModel;
 
-class UnitRepository extends Model
+class UnitRepository extends SupportModel
 {
 
     protected $table = 'sn_product_unit_repositories';

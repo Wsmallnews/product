@@ -11,14 +11,17 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Wsmallnews\Product\Models\Product as ProductModel;
 use Wsmallnews\Product\Resources\ProductResource\Pages;
 use Wsmallnews\Product\ResourceBuilder\ProductResourceBuilder;
+use Wsmallnews\Support\Traits\Resources\SetResource;
 
 class ProductResource extends Resource
 {
+    use SetResource;
+
     protected static ?string $model = ProductModel::class;
 
     protected static ?string $navigationGroup = '产品管理';
-
     protected static ?string $navigationLabel = '产品库';
+
     protected static ?string $navigationIcon = 'elemplus-goods-filled';
 
     protected static ?string $recordTitleAttribute = 'title';
@@ -29,14 +32,6 @@ class ProductResource extends Resource
     protected static ?string $slug = '/products';
 
     protected static ?int $navigationSort = 1;
-
-
-
-    public static function setAttribute($key, $value)
-    {
-        self::$$key = $value;
-    }
-
 
 
     public static function form(Form $form): Form

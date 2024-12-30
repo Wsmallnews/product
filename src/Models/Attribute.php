@@ -2,9 +2,9 @@
 
 namespace Wsmallnews\Product\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Wsmallnews\Support\Models\SupportModel;
 
-class Attribute extends Model
+class Attribute extends SupportModel
 {
 
     protected $table = 'sn_product_attributes';
