@@ -20,6 +20,12 @@ use Wsmallnews\Product\Components\ProductList;
 use Wsmallnews\Product\Components\ProductSku;
 use Wsmallnews\Product\Components\ProductDetail;
 use Wsmallnews\Product\Testing\TestsProduct;
+use Wsmallnews\Product\Models\Attribute;
+use Wsmallnews\Product\Models\AttributeRepository;
+use Wsmallnews\Product\Models\Product as ProductModel;
+use Wsmallnews\Product\Models\Sku;
+use Wsmallnews\Product\Models\SkuPrice;
+use Wsmallnews\Product\Models\UnitRepository;
 
 class ProductServiceProvider extends PackageServiceProvider
 {
@@ -71,9 +77,12 @@ class ProductServiceProvider extends PackageServiceProvider
     {
         // 注册模型别名
         Relation::enforceMorphMap([
-            'sn_product' => 'Wsmallnews\Product\Models\Product',
-            'sn_product_sku' => 'Wsmallnews\Product\Models\Sku',
-            'sn_product_sku_price' => 'Wsmallnews\Product\Models\SkuPrice',
+            'sn_product_attribute' => Attribute::class,
+            'sn_product_attribute_repository' => AttributeRepository::class,
+            'sn_product' => ProductModel::class,
+            'sn_product_sku' => Sku::class,
+            'sn_product_sku_price' => SkuPrice::class,
+            'sn_product_unit_repository' => UnitRepository::class,
         ]);
 
         // Asset Registration
