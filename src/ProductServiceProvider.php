@@ -167,7 +167,10 @@ class ProductServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            // 'create_sn_order_table',
+            'create_sn_products_table',
+            'create_sn_product_skus_table',
+            'create_sn_product_attributes_table',
+            'create_sn_product_unit_repositories_table'
         ];
     }
 }
