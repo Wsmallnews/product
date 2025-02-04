@@ -3,7 +3,7 @@
 namespace Wsmallnews\Product\Resources;
 
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,12 +11,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Wsmallnews\Product\Models\Product as ProductModel;
 use Wsmallnews\Product\Resources\ProductResource\Pages;
 use Wsmallnews\Product\ResourceBuilder\ProductResourceBuilder;
-use Wsmallnews\Support\Traits\Resources\SetResource;
+use Wsmallnews\Support\Resources\SupportResource;
 
-class ProductResource extends Resource
+class ProductResource extends SupportResource
 {
-    use SetResource;
-
     protected static ?string $model = ProductModel::class;
 
     protected static ?string $navigationGroup = '产品管理';
@@ -56,7 +54,7 @@ class ProductResource extends Resource
             )
             ->filters(
                 (new ProductResourceBuilder)->filters(),
-                layout: \Filament\Tables\Enums\FiltersLayout::AboveContentCollapsible       // 这个更好，可以在表格上面展示搜索条件，可以折叠
+                // layout: \Filament\Tables\Enums\FiltersLayout::AboveContentCollapsible       // 这个更好，可以在表格上面展示搜索条件，可以折叠
             )
             ->deferFilters()        // 延迟过滤
             ->actions([

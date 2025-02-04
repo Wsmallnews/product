@@ -11,12 +11,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Models\UnitRepository;
 use Wsmallnews\Product\Resources\UnitRepositoryResource\Pages;
 use Wsmallnews\Product\Resources\UnitRepositoryResource\RelationManagers;
-use Wsmallnews\Support\Traits\Resources\SetResource;
+use Wsmallnews\Support\Resources\SupportResource;
 
-class UnitRepositoryResource extends Resource
+class UnitRepositoryResource extends SupportResource
 {
-    use SetResource;
-
     protected static ?string $model = UnitRepository::class;
 
     protected static ?string $navigationGroup = '产品管理';

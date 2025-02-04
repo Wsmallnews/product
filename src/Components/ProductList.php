@@ -37,7 +37,7 @@ class ProductList extends Component
 
     public function render()
     {
-        $current = Product::query()->scopeInfo('default', 0);
+        $current = Product::query()->scopeable('default', 0);
 
         if ($this->pageType == 'paginator') {
             $current = $current->paginate($this->perPage, pageName: $this->pageName);

@@ -13,15 +13,26 @@ use Wsmallnews\Product\Enums;
 use Wsmallnews\Product\ResourceBuilder\ProductResourceBuilder;
 use Wsmallnews\Product\ResourceBuilder\Traits\WizardForm;
 use Wsmallnews\Product\Resources\ProductResource;
+use Wsmallnews\Support\Traits\Resources\Pages\CanScopeable;
+
 class CreateProduct extends CreateRecord
 {
-    protected static string $resource = ProductResource::class;
-
-
+    use CanScopeable;
     use WizardForm;
 
+    protected static string $resource = ProductResource::class;
+
+    
     protected function hasSkippableSteps(): bool
     {
         return true;
+    }
+
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data = $this->fillScopeable($data);
+
+        return $data;
     }
 }

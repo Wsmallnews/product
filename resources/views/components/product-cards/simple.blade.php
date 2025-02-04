@@ -10,7 +10,7 @@
 <x-sn-support::base.card class="w-full group flex rounded-md flex-col overflow-hidden" tag="a" :border="true" :href="$url" :should-open-url-in-new-tab="true" >
     <div class="w-full relative pb-[100%]">
         @if (filled($product->image))
-            <img src="https://unit.smallnews.top/storage/{{$product->image}}" class="size-full object-cover absolute transition duration-700 ease-out group-hover:scale-105" />
+            <img src="http://unit.test/storage/{{$product->image}}" class="size-full object-cover absolute transition duration-700 ease-out group-hover:scale-105" />
         @endif
     </div>
 

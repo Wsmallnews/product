@@ -4,6 +4,7 @@ namespace Wsmallnews\Product;
 
 use Filament\Facades\Filament;
 use Filament\Support\Assets\AlpineComponent;
+use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -131,9 +132,9 @@ class ProductServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('order', __DIR__ . '/../resources/dist/components/order.js'),
-            // Css::make('order-styles', __DIR__ . '/../resources/dist/order.css'),
-            // Js::make('order-scripts', __DIR__ . '/../resources/dist/order.js'),
+            // AlpineComponent::make('product', __DIR__ . '/../resources/dist/components/product.js'),
+            Css::make('product-styles', __DIR__ . '/../resources/dist/product.css'),
+            // Js::make('product-scripts', __DIR__ . '/../resources/dist/product.js'),
         ];
     }
 

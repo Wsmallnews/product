@@ -105,11 +105,24 @@ class Fields
     public static function stockUnit()
     {
         return Components\Select::make('stock_unit')
-        ->relationship(name: 'stockUnit', titleAttribute: 'name', modifyQueryUsing: fn(Builder $query) => $query)      // @sn todo 这里要考虑 scope 的问题
+            // ->relationship(name: 'stockUnit', titleAttribute: 'name', modifyQueryUsing: fn(Builder $query) => $query->scopeable())      // @sn todo 这里要考虑 scope 的问题
+            ->relationship(name: 'stockUnit', titleAttribute: 'name', modifyQueryUsing: function (Builder $query, Components\Select $component) {
+                $scopeInfo = $component->getLivewire()->getScopeInfo();
+                return $query->scopeable(scope_type: $scopeInfo['scope_type'], scope_id: $scopeInfo['scope_id']);
+            })
             ->createOptionForm([
                 Components\TextInput::make('name')->label('单位名称')->placeholder('请输入单位名称')->required(),
+                Components\TextInput::make('order_column')->label('排序')->integer()
+                    ->placeholder('正序排列')
+                    ->rules(['integer', 'min:0'])
+                    ->columnSpan(1),
             ])
-            ->createOptionUsing(function (array $data) {
+            ->createOptionUsing(function(Components\Select $component, array $data) {
+                $data = $component->getLivewire()->fillScopeable($data);        // 合并 scopeable 数据
+
+                $record = $component->getRelationship()->getRelated();          // 关联的 model
+                $record->fill($data);
+                $record->save();                        // 保存数据
                 return $data['name'];                   // 这里商品直接保存的是单位，不是 id
             })
             ->live()

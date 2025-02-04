@@ -8,9 +8,12 @@ use Filament\Resources\Pages\ListRecords\Tab;
 use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Resources\ProductResource;
 use Wsmallnews\Product\Enums\ProductStatus;
+use Wsmallnews\Support\Traits\Resources\Pages\CanScopeable;
 
 class ListProducts extends ListRecords
 {
+    use CanScopeable;
+
     protected static string $resource = ProductResource::class;
 
 

@@ -2,6 +2,7 @@
 
 namespace Wsmallnews\Product\ResourceBuilder;
 
+use Filament\Tables;
 use Filament\Forms\Components;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Get;
@@ -93,6 +94,7 @@ class ProductResourceBuilder implements ResourceBuilderInterface
     {
         return [
             FiltersRepository::priceRange(),
+            Tables\Filters\TrashedFilter::make(),
         ];
     }
 
