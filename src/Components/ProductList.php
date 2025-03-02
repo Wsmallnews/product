@@ -4,13 +4,12 @@ namespace Wsmallnews\Product\Components;
 
 use Closure;
 use Illuminate\Support\Collection;
-use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithoutUrlPagination;
 use Wsmallnews\Product\Models\Product;
+use Wsmallnews\Support\Components\BaseComponent;
 
-
-class ProductList extends Component
+class ProductList extends BaseComponent
 {
     use WithPagination;
     use WithoutUrlPagination;
@@ -37,7 +36,7 @@ class ProductList extends Component
 
     public function render()
     {
-        $current = Product::query()->scopeable('default', 0);
+        $current = Product::query()->scopeable(...$this->getScopeInfo());
 
         if ($this->pageType == 'paginator') {
             $current = $current->paginate($this->perPage, pageName: $this->pageName);

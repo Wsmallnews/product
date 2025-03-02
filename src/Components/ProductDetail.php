@@ -3,13 +3,12 @@
 namespace Wsmallnews\Product\Components;
 
 use Illuminate\Support\Collection;
-use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithoutUrlPagination;
 use Wsmallnews\Product\Models\Product;
+use Wsmallnews\Support\Components\BaseComponent;
 
-
-class ProductDetail extends Component
+class ProductDetail extends BaseComponent
 {
     use WithPagination;
     use WithoutUrlPagination;
@@ -28,7 +27,7 @@ class ProductDetail extends Component
 
     public function mount($id)
     {
-        $query = Product::show()->with([
+        $query = Product::query()->scopeable(...$this->getScopeInfo())->show()->with([
             'skus.children',
             'attributes' => function ($builder) {
                 $builder->with(['children.attribute_repository', 'attribute_repository']);
