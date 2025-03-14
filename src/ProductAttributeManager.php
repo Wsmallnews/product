@@ -8,7 +8,7 @@ class ProductAttributeManager
 {
 
     /**
-     * 检测用户选择的属性是否正确，并获取用户选择的属性的完整信息
+     * （@sn todo 下面如果禁用的属性，不校验必选）检测用户选择的属性是否正确，并获取用户选择的属性的完整信息
      *
      * @param array $productAttributes
      * @param array $buyAttributes
@@ -131,14 +131,16 @@ class ProductAttributeManager
         $current_product_attribute_amount = '0';
         $current_product_attribute_texts = [];
         foreach ($buyAttributes as $attribute) {
-            $current_product_attribute_texts = [];
+            // $current_text = $attribute['name'] . ':';
             foreach ($attribute['children'] as $child) {
-                $current_child_product_attribute_amount = bcmul((string)$child['price'], (string)$child['num'], 2);
+                $current_child_product_attribute_amount = sn_currency()->multiply($child['price'], $child['num']);
+                $current_product_attribute_amount = sn_currency()->add($current_product_attribute_amount, $current_child_product_attribute_amount);
 
-                $current_product_attribute_amount = bcadd($current_product_attribute_amount, $current_child_product_attribute_amount, 2);
-
+                // $current_text .= $child['name'] . 'x' . $child['num'] . ',';
                 $current_product_attribute_texts[] = $child['name'] . '*' . $child['num'];
             }
+
+            // $current_product_attribute_texts[] = trim($current_text, ',') . ';';
         }
 
         return [$current_product_attribute_amount, $current_product_attribute_texts];

@@ -3,25 +3,24 @@
 namespace Wsmallnews\Product\Components;
 
 use Illuminate\Support\Collection;
-use Livewire\WithPagination;
-use Livewire\WithoutUrlPagination;
 use Wsmallnews\Product\Models\Product;
+use Wsmallnews\Product\Models\SkuPrice;
 use Wsmallnews\Support\Components\BaseComponent;
 
 class ProductDetail extends BaseComponent
 {
-    use WithPagination;
-    use WithoutUrlPagination;
-
     public Product $product;
 
+
+    public SkuPrice $choosedSkuPrice;
+
+
     public array $buyInfo = [
-        "product_id" => 30,
-        "product_sku_price_id" => 770,
+        "product_id" => 0,
+        "product_sku_price_id" => 0,
         "product_num" => 1,
         "product_attributes" => [],
-        "delivery_type" => "selfetch",
-        "use_store_id" => 0
+        "delivery_type" => "",
     ];
 
 
@@ -36,21 +35,6 @@ class ProductDetail extends BaseComponent
 
         $this->product = $query->findOrFail($id);
     }
-
-
-
-    // public function buy()
-    // {
-    //     // 跳转到结算页面
-    //     // return $this->redirectRoute('order-confirm');
-    //     $redirectData = [
-    //         'type' => 'product',
-    //         'from' => 'product-detail',
-    //         'relate_items' => [$this->buyInfo],
-    //     ];
-
-    //     return $this->redirect('/shop/order-confirm?' . http_build_query($redirectData));
-    // }
 
 
 

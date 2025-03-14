@@ -382,6 +382,7 @@ class Fields
     {
         return Components\TextInput::make('cost_price')
             ->label('成本价')
+            ->formatStateUsing(sn_currency()->filamentFormState)
             ->suffix(currency_symbol(Product::getCurrency()))
             ->helperText('用户无法看到成本价.')
             ->numeric()

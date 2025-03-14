@@ -29,7 +29,7 @@ class Columns
     public static function originalPrice()
     {
         return Tables\Columns\TextColumn::make('original_price')->label('商品原价')
-                ->money()
+                // ->money()
                 ->sortable()
                 ->alignLeft()
                 ->extraAttributes(['style' => 'text-decoration-line: line-through']);
@@ -39,7 +39,7 @@ class Columns
     public static function price()
     {
         return Tables\Columns\TextColumn::make('price')->label('商品售价')
-                ->money()
+                // ->money()
                 ->sortable()
                 ->weight(FontWeight::Bold)
                 ->alignLeft();

@@ -1,3 +1,7 @@
+@php
+use Wsmallnews\Product\Product;
+@endphp
+
 @assets
 <style>
     .product-content img {
@@ -14,12 +18,14 @@
 
     <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white">
         <div class="w-full">
-            <x-sn-support::swiper :images="$product->images" class="w-full" :has-thumb="true" :thumb-scale="20" thumb-position="left" />
+            <x-sn-support::swiper :images="Product::filesUrl($product->images)" class="w-full" :has-thumb="true" :thumb-scale="20" thumb-position="left" />
         </div>
 
         <div class="w-full flex flex-col" @sku-choosed="skuChoosed">
             <div class="text-xl font-bold">{{$product->title}}</div>
             <div class="text-base text-gray-600">{{$product->subtitle}}</div>
+
+            {{-- <x-sn-support::amount  /> --}}
 
             <livewire:sn-product-sku :product="$product" />
 
