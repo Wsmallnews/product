@@ -366,7 +366,8 @@ class Fields
     {
         return Components\TextInput::make('original_price')
             ->label('原价')
-            ->suffix(currency_symbol(Product::getCurrency()))
+            ->formatStateUsing(sn_currency()->filamentFormState)
+            ->suffix(sn_currency()->filamentFormSymbol)
             ->numeric()
             ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
             ->required();
@@ -383,7 +384,7 @@ class Fields
         return Components\TextInput::make('cost_price')
             ->label('成本价')
             ->formatStateUsing(sn_currency()->filamentFormState)
-            ->suffix(currency_symbol(Product::getCurrency()))
+            ->suffix(sn_currency()->filamentFormSymbol)
             ->helperText('用户无法看到成本价.')
             ->numeric()
             ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
@@ -400,7 +401,8 @@ class Fields
     {
         return Components\TextInput::make('price')
             ->label('售卖价')
-            ->suffix(currency_symbol(Product::getCurrency()))
+            ->formatStateUsing(sn_currency()->filamentFormState)
+            ->suffix(sn_currency()->filamentFormSymbol)
             ->numeric()
             ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
             ->required();

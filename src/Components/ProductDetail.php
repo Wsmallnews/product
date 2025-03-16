@@ -14,7 +14,6 @@ class ProductDetail extends BaseComponent
 
     public SkuPrice $choosedSkuPrice;
 
-
     public array $buyInfo = [
         "product_id" => 0,
         "product_sku_price_id" => 0,

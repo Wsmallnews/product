@@ -10,12 +10,7 @@ use Wsmallnews\Product\Product;
 </style>
 @endassets
 
-<div class="w-full" x-data="detailManager({
-    product: @js($product),
-    skus: @js($skus),
-    skuPrices: @js($skuPrices)
-})">
-
+<div class="w-full" x-data="">
     <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white">
         <div class="w-full">
             <x-sn-support::swiper :images="Product::filesUrl($product->images)" class="w-full" :has-thumb="true" :thumb-scale="20" thumb-position="left" />
@@ -25,7 +20,7 @@ use Wsmallnews\Product\Product;
             <div class="text-xl font-bold">{{$product->title}}</div>
             <div class="text-base text-gray-600">{{$product->subtitle}}</div>
 
-            {{-- <x-sn-support::amount  /> --}}
+            <x-sn-support::amount :amount="$choosedSkuPrice ? $choosedSkuPrice->price : $product->price" />
 
             <livewire:sn-product-sku :product="$product" />
 
