@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Enums\AttributeStatus;
 use Wsmallnews\Product\Models\AttributeRepository;
 use Wsmallnews\Product\Resources\AttributeRepositoryResource\Pages;
-use Wsmallnews\Support\Resources\SupportResource;
+use Wsmallnews\Support\Filament\Resources\SupportResource;
 
 class AttributeRepositoryResource extends SupportResource
 {

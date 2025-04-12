@@ -133,7 +133,7 @@ class ProductServiceProvider extends PackageServiceProvider
     {
         return [
             // AlpineComponent::make('product', __DIR__ . '/../resources/dist/components/product.js'),
-            Css::make('product-styles', __DIR__ . '/../resources/dist/product.css')->loadedOnRequest(),
+            // Css::make('product-styles', __DIR__ . '/../resources/dist/product.css')->loadedOnRequest(),
             // Js::make('product-scripts', __DIR__ . '/../resources/dist/product.js'),
         ];
     }

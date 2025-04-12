@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Wsmallnews\Product\Models\Product as ProductModel;
 use Wsmallnews\Product\Resources\ProductResource\Pages;
 use Wsmallnews\Product\ResourceBuilder\ProductResourceBuilder;
-use Wsmallnews\Support\Resources\SupportResource;
+use Wsmallnews\Support\Filament\Resources\SupportResource;
 
 class ProductResource extends SupportResource
 {

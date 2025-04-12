@@ -25,6 +25,20 @@ class Columns
     }
 
 
+    public static function image()
+    {
+        return Tables\Columns\ImageColumn::make('image')->label('图片');
+    }
+    
+    public static function title()
+    {
+        return Tables\Columns\TextColumn::make('title')->label('标题');
+    }
+    public static function type()
+    {
+        return Tables\Columns\TextColumn::make('type')->label('类型');
+    }
+
 
     public static function originalPrice()
     {

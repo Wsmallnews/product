@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Models\UnitRepository;
 use Wsmallnews\Product\Resources\UnitRepositoryResource\Pages;
 use Wsmallnews\Product\Resources\UnitRepositoryResource\RelationManagers;
-use Wsmallnews\Support\Resources\SupportResource;
+use Wsmallnews\Support\Filament\Resources\SupportResource;
 
 class UnitRepositoryResource extends SupportResource
 {

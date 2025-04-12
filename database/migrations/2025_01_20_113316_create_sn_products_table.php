@@ -28,7 +28,7 @@ return new class extends Migration
             $table->unsignedInteger('price')->default(0)->comment('现价');
 
             $table->string('stock_type', 20)->comment('库存类型');
-            $table->string('stock_unit', 20)->comment('库存单位');
+            $table->string('stock_unit', 20)->nullable()->comment('库存单位');
             $table->unsignedInteger('collects')->default(0)->comment('收藏数量');
             $table->unsignedInteger('views')->default(0)->comment('浏览数量');
             $table->unsignedInteger('show_sales')->default(0)->comment('显示销量');

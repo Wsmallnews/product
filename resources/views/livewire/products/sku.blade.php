@@ -7,6 +7,12 @@
     skus: @js($skus),
     skuPrices: @js($skuPrices)
 })">
+
+    
+
+
+
+
     <template x-for="sku in skus">
         <div class="flex">
             <div class="mr-3 flex-none" x-text="sku.name"></div>

@@ -10,13 +10,17 @@ use Wsmallnews\Product\Product;
 </style>
 @endassets
 
-<div class="w-full" x-data="">
+<div class="w-full" x-data="detailManager({
+    product: @js($product),
+    skus: @js($skus),
+    skuPrices: @js($skuPrices)
+})">
     <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white">
         <div class="w-full">
             <x-sn-support::swiper :images="Product::filesUrl($product->images)" class="w-full" :has-thumb="true" :thumb-scale="20" thumb-position="left" />
         </div>
 
-        <div class="w-full flex flex-col" @sku-choosed="skuChoosed">
+        <div class="w-full flex flex-col">
             <div class="text-xl font-bold">{{$product->title}}</div>
             <div class="text-base text-gray-600">{{$product->subtitle}}</div>
 
@@ -88,14 +92,8 @@ use Wsmallnews\Product\Product;
             product,
             skus,
             skuPrices,
-            currentSkuPrice: {},
             currentTab: null,
             init () {
-                if (this.product.sku_type == 'single') {
-                    // 单规格
-                    this.currentSkuPrice = this.skuPrices[0];
-                }
-
                 // 监听滚动条
                 window.addEventListener('scroll', () => {
                     const tabContents = document.querySelectorAll('.tab-content');
@@ -108,53 +106,6 @@ use Wsmallnews\Product\Product;
                         }
                     });
                 });
-            },
-            skuChoosed (e) {
-                console.log(e, 'skuChoosed');
-
-                let data = e.detail;
-                this.currentSkuPrice = data.skuPrice;
-            },
-            buy () {
-                // 检查用户是否选择了该选的东西
-                if (Object.keys(this.currentSkuPrice).length === 0) {
-                    // 提示
-                    new FilamentNotification()
-                        .title('请选择规格')
-                        .danger()
-                        .send()
-
-                    return false;
-                }
-
-                // set 设置 buyInfo 会触发一次 livewire/update 请求
-                this.$wire.set('buyInfo', {
-                    product_id: this.product.id,
-                    product_sku_price_id: this.currentSkuPrice.id,
-                    product_num: 1,
-                    product_attributes: []
-                });
-
-                this.$wire.dispatch('product-buy', {
-                    type: 'product',
-                    from: 'product-detail',
-                    relate_items: JSON.stringify([this.$wire.buyInfo]),
-                });
-
-
-                // 这个写法不会触发 livewire/update，但是相关数据都不会更新了
-                // this.$wire.dispatch('product-buy', {
-                //     type: 'product',
-                //     from: 'product-detail',
-                //         relate_items: JSON.stringify([{
-                //         product_id: this.product.id,
-                //         product_sku_price_id: this.currentSkuPrice.id,
-                //         product_num: 1,
-                //         product_attributes: []
-                //     }]),
-                // });
-
-                // this.$wire.buy();
             }
         }
     }

@@ -3,6 +3,7 @@
 namespace Wsmallnews\Product\Components;
 
 use Illuminate\Support\Collection;
+use Wsmallnews\Product\Enums;
 use Wsmallnews\Product\Models\Product;
 use Wsmallnews\Product\Models\SkuPrice;
 use Wsmallnews\Support\Components\BaseComponent;
@@ -33,6 +34,10 @@ class ProductDetail extends BaseComponent
         ]);
 
         $this->product = $query->findOrFail($id);
+
+        // if ($this->product->sku_type == Enums\ProductSkuType::Single) {
+        //     $this->choosedSkuPrice = $this->product->skuPrice;
+        // }
     }
 
 

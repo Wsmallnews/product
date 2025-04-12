@@ -23,22 +23,29 @@ class ProductResourceBuilder implements ResourceBuilderInterface
                 ->schema([
                     Components\Group::make()
                         ->schema([
-                            Components\Section::make()
-                                ->schema($this->baseInfo())->columns(2),
+                            Components\Section::make('基础信息')->schema(
+                                $this->baseInfo()
+                            ),
+                            Components\Section::make('图片信息')->schema(
+                                $this->imageInfo()
+                            ),
 
-                            Components\Section::make('规格库存')
-                                ->schema($this->skuStockInfo())->columns(2),
+                            Components\Section::make('库存信息')->schema(
+                                $this->stockInfo()
+                            ),
+                            Components\Section::make('规格信息')->schema(
+                                $this->skuInfo()
+                            ),
 
-                            Components\Section::make('参数详情')
-                                ->schema($this->detailInfo())->columns(2),
-                        ])->columnSpan(2),
-                    Components\Group::make()
-                        ->schema([
-                            Components\Section::make('状态')
-                                ->schema($this->statusInfo())->columns(2),
-                        ])->columnSpan(1)
+                            Components\Section::make('参数信息')->schema(
+                                $this->paramsInfo()
+                            ),
+                            Components\Section::make('产品详情')->schema(
+                                $this->detailInfo()
+                            )
+                        ])->columnSpan(2)
                 ])
-                ->columns(3)
+                ->columns(2)
                 ->columnSpanFull()
         ];
     }
@@ -52,23 +59,32 @@ class ProductResourceBuilder implements ResourceBuilderInterface
                 ->icon('heroicon-o-home')
                 ->completedIcon('heroicon-m-hand-thumb-up')
                 ->schema([
-                    Components\Section::make()->schema(
+                    Components\Section::make('基础信息')->schema(
                         $this->baseInfo()
+                    ),
+                    Components\Section::make('图片信息')->schema(
+                        $this->imageInfo()
                     )
                 ]),
             Wizard\Step::make('规格库存')
                 ->icon('ionicon-pricetags')
                 ->completedIcon('heroicon-m-hand-thumb-up')
                 ->schema([
-                    Components\Section::make()->schema(
-                        $this->skuStockInfo()
+                    Components\Section::make('库存信息')->schema(
+                        $this->stockInfo()
+                    ),
+                    Components\Section::make('规格信息')->schema(
+                        $this->skuInfo()
                     )
                 ]),
             Wizard\Step::make('产品详情')
                 ->icon('mdi-content-save-edit')
                 ->completedIcon('heroicon-m-hand-thumb-up')
                 ->schema([
-                    Components\Section::make()->schema(
+                    Components\Section::make('参数信息')->schema(
+                        $this->paramsInfo()
+                    ),
+                    Components\Section::make('产品详情')->schema(
                         $this->detailInfo()
                     )
                 ]),
@@ -106,19 +122,33 @@ class ProductResourceBuilder implements ResourceBuilderInterface
         return [
             FieldsRepository::title()->columnSpan(2),
             FieldsRepository::subtitle()->columnSpan(2),
-            FieldsRepository::image()->columnSpan(1),
+            FieldsRepository::status()->columnSpan(2),
+            FieldsRepository::orderColumn()->columnSpan(2),
+        ];
+    }
+
+    public function imageInfo(): array
+    {
+        return [
+            FieldsRepository::image()->columnSpan(2),
             FieldsRepository::images()->columnSpan(2),
         ];
     }
 
 
-    public function skuStockInfo(): array
+    public function stockInfo(): array
     {
         return [
             FieldsRepository::stockType()->columnSpan(1),
             FieldsRepository::stockUnit()->columnSpan(1),
             FieldsRepository::showSales()->columnSpan(1),
+        ];
+    }
 
+
+    public function skuInfo(): array
+    {
+        return [
             FieldsRepository::skuType()
                 // ->disabledOn(['edit'])      // 编辑时禁止修改 规格类型
                 ->columnSpanFull(),
@@ -136,22 +166,17 @@ class ProductResourceBuilder implements ResourceBuilderInterface
         ];
     }
 
-
+    public function paramsInfo(): array
+    {
+        return [
+            FieldsRepository::params()->columnSpanFull(),
+        ];
+    }
 
     public function detailInfo(): array
     {
         return [
-            FieldsRepository::params()->columnSpanFull(),
             FieldsRepository::richContent()->columnSpanFull()
-        ];
-    }
-
-
-    public function statusInfo(): array
-    {
-        return [
-            FieldsRepository::status()->columnSpanFull(),
-            FieldsRepository::orderColumn()->columnSpanFull()
         ];
     }
 }

@@ -22,12 +22,9 @@ trait WizardForm
                     ->skippable($this->hasSkippableSteps())
                     ->contained(false)
                     ->columns(2)
-                    ->columnSpan(2),
-                Components\Section::make()->schema(
-                    (new ProductResourceBuilder())->statusInfo()
-                )->columnSpan(1)
+                    ->columnSpanFull(),
             ])
-            ->columns(3);
+            ->columns(2);
     }
 
 

@@ -4,13 +4,27 @@ namespace Wsmallnews\Product\Repositories;
 
 use Filament\Forms\Get;
 use Filament\Forms\Components;
+use Filament\Forms\Components\Component;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Product\Product;
-use Wsmallnews\Support\Forms\Fields\Arrange;
+use Wsmallnews\Support\Filament\Forms\Fields\Arrange;
 
 class Fields
 {
+
+    /**
+     * 产品标题
+     *
+     * @return Components\TextInput
+     */
+    public static function type()
+    {
+        return Components\TextInput::make('type')->label('产品类型')->default('normal')->placeholder('请输入产品类型')->required();
+    }
+
 
     /**
      * 产品标题
@@ -40,6 +54,23 @@ class Fields
     }
 
 
+    // /**
+    //  * 产品主图
+    //  *
+    //  * @return Components\FileUpload
+    //  */
+    // public static function image()
+    // {
+    //     return Components\FileUpload::make('image')->label('产品主图')
+    //         ->image()
+    //         ->directory(Product::getImageDirectory())
+    //         ->required()
+    //         ->openable()
+    //         ->downloadable()
+    //         ->uploadingMessage('产品主图上传中...')
+    //         ->imagePreviewHeight('100');
+    // }
+
     /**
      * 产品主图
      *
@@ -47,15 +78,41 @@ class Fields
      */
     public static function image()
     {
-        return Components\FileUpload::make('image')->label('产品主图')
+        return SpatieMediaLibraryFileUpload::make('image')->label('产品主图')
+            ->collection('main')
             ->image()
-            ->directory(Product::getImageDirectory())
             ->required()
             ->openable()
             ->downloadable()
             ->uploadingMessage('产品主图上传中...')
             ->imagePreviewHeight('100');
+
+
+        // return Components\FileUpload::make('image')->label('产品主图')
+        //     // ->image()
+        //     ->directory(Product::getImageDirectory())
+        //     // ->required()
+        //     ->openable()
+        //     ->downloadable()
+        //     ->uploadingMessage('产品主图上传中...')
+        //     ->imagePreviewHeight('100');
+
+
+        // return Components\FileUpload::make('media')
+        //     ->label(__('lunarpanel::relationmanagers.medias.form.media.label'))
+        //     ->columnSpan(2)
+        //     ->hiddenOn('edit')
+        //     ->storeFiles(false)
+        //     ->imageEditor()
+        //     ->required()
+        //     ->imageEditorAspectRatios([
+        //         null,
+        //         '16:9',
+        //         '4:3',
+        //         '1:1',
+        //     ]);
     }
+
 
 
     /**
@@ -65,9 +122,9 @@ class Fields
      */
     public static function images()
     {
-        return Components\FileUpload::make('images')->label('产品轮播图')
+        return SpatieMediaLibraryFileUpload::make('images')->label('产品轮播图')
+            ->collection('gallery')
             ->image()
-            ->directory(Product::getImageDirectory())
             ->required()
             ->multiple()
             ->openable()
@@ -78,6 +135,21 @@ class Fields
             ->maxFiles(20)
             ->uploadingMessage('轮播图片上传中...')
             ->imagePreviewHeight('100');
+
+
+        // return Components\FileUpload::make('images')->label('产品轮播图')
+        //     // ->image()
+        //     ->directory(Product::getImageDirectory())
+        //     // ->required()
+        //     ->multiple()
+        //     ->openable()
+        //     ->downloadable()
+        //     ->reorderable()
+        //     ->appendFiles()
+        //     ->minFiles(1)
+        //     ->maxFiles(20)
+        //     ->uploadingMessage('轮播图片上传中...')
+        //     ->imagePreviewHeight('100');
     }
 
 
@@ -89,10 +161,23 @@ class Fields
     public static function stockType()
     {
         return Components\Radio::make('stock_type')
-        ->label('库存类型')
-        ->options(Enums\ProductStockType::class)
+            ->label('库存类型')
+            ->options(Enums\ProductStockType::class)
             ->default(Enums\ProductStockType::Stock->value)
             ->live()
+            ->required();
+    }
+
+
+    /**
+     * 产品库存类型
+     *
+     * @return Components\Hidden
+     */
+    public static function hiddenStockType()
+    {
+        return Components\Hidden::make('stock_type')
+            ->default(Enums\ProductStockType::Infinite->value)
             ->required();
     }
 
@@ -148,6 +233,19 @@ class Fields
 
 
     /**
+     * sku single 隐藏表单
+     *
+     * @return Components\Hidden
+     */
+    public static function hiddenSkuType()
+    {
+        return Components\Hidden::make('sku_type')
+            ->default(Enums\ProductSkuType::Single->value);
+    }
+
+
+
+    /**
      * sku 类型
      *
      * @return Components\Radio
@@ -188,6 +286,17 @@ class Fields
     public static function skuMultiple()
     {
         return Arrange::make('sku_multiple')->label('规格')
+            ->formatStateUsing(function (Component $component, ?Model $record, $state) {
+                $state['recursions'] = $state['recursions'] ?? [];
+
+                foreach ($state['recursions'] as &$recursion) {
+                    $recursion['original_price'] = sn_currency()->formatByDecimalFromState($recursion['original_price']);
+                    $recursion['cost_price'] = sn_currency()->formatByDecimalFromState($recursion['cost_price']);
+                    $recursion['price'] = sn_currency()->formatByDecimalFromState($recursion['price']);
+                }
+
+                return $state;
+            })
             ->relationships([
                 'arranges' => [
                     'relationship' => 'skus',
@@ -197,19 +306,20 @@ class Fields
                 ],
                 'recursions' => [
                     'relationship' => 'skuPrices',
-                    'savingUsing' => function ($record, $recursion) {       // 处理 recursions 自定义字段
+                    'savingUsing' => function (Get $get, $record, $recursion) {       // 处理 recursions 自定义字段
                         $recursion['product_sku_text'] = $recursion['arrange_texts'] ?? [];
                         $recursion['product_sn'] = $recursion['product_sn'] ?? null;
                         $recursion['image'] = $recursion['image'] ?? null;
-                        $recursion['sku_type'] = $record?->sku_type ?: Enums\ProductSkuType::Single->value;
+                        $recursion['sku_type'] = $get('sku_type') ?: Enums\ProductSkuType::Single->value;
                         $recursion['original_price'] = $recursion['original_price'] ?? 0;
                         $recursion['cost_price'] = $recursion['cost_price'] ?? 0;
                         $recursion['price'] = $recursion['price'] ?? 0;
-                        $recursion['stock'] = $recursion['stock'] ? intval($recursion['stock']) : 0;
-                        $recursion['weight'] = $recursion['weight'] ? floatval($recursion['weight']) : 0;
+                        $recursion['stock'] = intval($recursion['stock'] ?? 0);
+                        $recursion['weight'] = floatval($recursion['weight'] ?? 0);
                         $recursion['status'] = $recursion['status'] ?? Enums\SkuPriceStatus::Up;
 
                         unset($recursion['arrange_texts']);     // 删除原始字段
+
                         return $recursion;
                     }
                 ],
@@ -224,16 +334,19 @@ class Fields
                     // ],
                     [
                         'label' => '原价',
+                        'type' => 'number',
                         'field' => 'original_price',
                         'default' => 0,
                     ],
                     [
                         'label' => '成本价',
+                        'type' => 'number',
                         'field' => 'cost_price',
                         'default' => 0,
                     ],
                     [
                         'label' => '售价',
+                        'type' => 'number',
                         'field' => 'price',
                         'default' => 0,
                     ],
@@ -242,6 +355,7 @@ class Fields
                 if ($get('stock_type') == Enums\ProductStockType::Stock->value) {
                     $tableFields[] = [
                         'label' => '库存',
+                        'type' => 'number',
                         'field' => 'stock',
                         'default' => 0,
                         'suffix' => $get('stock_unit')
@@ -249,18 +363,19 @@ class Fields
                 }
                 $tableFields[] = [
                     'label' => '重量',
+                    'type' => 'number',
                     'field' => 'weight',
                     'default' => 0,
                 ];
                 $tableFields[] = [
                     'label' => '货号',
+                    'type' => 'text',
                     'field' => 'product_sn',
                     'default' => null,
                 ];
 
                 return $tableFields;
             })
-            ->tableFieldsView('sn-product::arrange.table-fields')
             ->arrangePlaceholder('请填写规格名')
             ->arrangeChildPlaceholder('请填写子规格名')
             ->addActionLabel('添加规格')
@@ -347,6 +462,18 @@ class Fields
             ->options(Enums\ProductStatus::class);
     }
 
+
+
+    /**
+     * 产品规格状态
+     *
+     * @return Components\Hidden
+     */
+    public static function hiddenSkuPriceStatus()
+    {
+        return Components\Hidden::make('status')
+            ->default(Enums\SkuPriceStatus::Up);
+    }
 
 
     public static function orderColumn()
