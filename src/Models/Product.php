@@ -12,6 +12,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Tags\HasTags;
+use Wsmallnews\Product\Product as ProductManager;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Support\Casts\MoneyCast;
 use Wsmallnews\Support\Models\SupportModel;
@@ -63,29 +64,33 @@ class Product extends SupportModel implements HasMedia
             ],
         ];
 
-        // if ($fallbackUrl) {
-        //     $collection = $collection->useFallbackUrl($fallbackUrl);
-        // }
+        $mainCollection = $this->addMediaCollection('main');
+        $galleryCollection = $this->addMediaCollection('gallery');
 
-        // if ($fallbackPath) {
-        //     $collection = $collection->useFallbackPath($fallbackPath);
-        // }
+        $fallbackUrl = ProductManager::getMediaConfig('fallback.url');
+        if ($fallbackUrl) {
+            $mainCollection = $mainCollection->useFallbackUrl($fallbackUrl);
+            $galleryCollection = $galleryCollection->useFallbackUrl($fallbackUrl);
+        }
 
-        $this->addMediaCollection('main')
-            ->registerMediaConversions(function (Media $media) use ($conversions) {
-                foreach ($conversions as $key => $conversion) {
-                    $this->addMediaConversion($key)
-                        ->fit(
-                            Fit::Contain,
-                            $conversion['width'],
-                            $conversion['height']
-                        )
-                        ->keepOriginalImageFormat()     // 保持原始格式
-                        ->nonQueued();
-                }
-            });
+        $fallbackPath = ProductManager::getMediaConfig('fallback.path');
+        if ($fallbackPath) {
+            $mainCollection = $mainCollection->useFallbackPath($fallbackPath);
+            $galleryCollection = $galleryCollection->useFallbackPath($fallbackPath);
+        }
 
-        $this->addMediaCollection('gallery');
+        $mainCollection->registerMediaConversions(function (Media $media) use ($conversions) {
+            foreach ($conversions as $key => $conversion) {
+                $this->addMediaConversion($key)
+                    ->fit(
+                        Fit::Contain,
+                        $conversion['width'],
+                        $conversion['height']
+                    )
+                    ->keepOriginalImageFormat()     // 保持原始格式
+                    ->nonQueued();
+            }
+        });
     }
 
     public function scopeShow($query)

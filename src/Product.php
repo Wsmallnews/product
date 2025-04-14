@@ -16,6 +16,7 @@ class Product
 
     public static $diskName = null;
 
+    public static $mediaConfig = [];
 
     /**
      * 设置上传磁盘驱动
@@ -91,4 +92,15 @@ class Product
         return self::$currency;
     }
 
+
+    public static function setMediaConfig($config)
+    {
+        self::$mediaConfig = $config;
+    }
+
+
+    public static function getMediaConfig($name = null)
+    {
+        return $name ? data_get(self::$mediaConfig, $name, null) : self::$mediaConfig;
+    }
 }
