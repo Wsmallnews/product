@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Product\Product;
 use Wsmallnews\Support\Filament\Forms\Fields\Arrange;
+use Wsmallnews\Support\Filament\Forms\Fields\MediableFileUpload;
 
 class Fields
 {
@@ -78,14 +79,24 @@ class Fields
      */
     public static function image()
     {
-        return SpatieMediaLibraryFileUpload::make('image')->label('产品主图')
-            ->collection('main')
+        return MediableFileUpload::make('image')->label('产品主图')
+            ->tag('main')
             ->image()
+            ->directory(Product::getImageDirectory())
             ->required()
             ->openable()
             ->downloadable()
             ->uploadingMessage('产品主图上传中...')
             ->imagePreviewHeight('100');
+
+        // return SpatieMediaLibraryFileUpload::make('image')->label('产品主图')
+        //     ->collection('main')
+        //     ->image()
+        //     ->required()
+        //     ->openable()
+        //     ->downloadable()
+        //     ->uploadingMessage('产品主图上传中...')
+        //     ->imagePreviewHeight('100');
 
 
         // return Components\FileUpload::make('image')->label('产品主图')
@@ -96,21 +107,6 @@ class Fields
         //     ->downloadable()
         //     ->uploadingMessage('产品主图上传中...')
         //     ->imagePreviewHeight('100');
-
-
-        // return Components\FileUpload::make('media')
-        //     ->label(__('lunarpanel::relationmanagers.medias.form.media.label'))
-        //     ->columnSpan(2)
-        //     ->hiddenOn('edit')
-        //     ->storeFiles(false)
-        //     ->imageEditor()
-        //     ->required()
-        //     ->imageEditorAspectRatios([
-        //         null,
-        //         '16:9',
-        //         '4:3',
-        //         '1:1',
-        //     ]);
     }
 
 
@@ -122,9 +118,10 @@ class Fields
      */
     public static function images()
     {
-        return SpatieMediaLibraryFileUpload::make('images')->label('产品轮播图')
-            ->collection('gallery')
+        return MediableFileUpload::make('images')->label('产品轮播图')
+            ->tag('gallery')
             ->image()
+            ->directory(Product::getImageDirectory())
             ->required()
             ->multiple()
             ->openable()
@@ -135,6 +132,21 @@ class Fields
             ->maxFiles(20)
             ->uploadingMessage('轮播图片上传中...')
             ->imagePreviewHeight('100');
+
+
+        // return SpatieMediaLibraryFileUpload::make('images')->label('产品轮播图')
+        //     ->collection('gallery')
+        //     ->image()
+        //     ->required()
+        //     ->multiple()
+        //     ->openable()
+        //     ->downloadable()
+        //     ->reorderable()
+        //     ->appendFiles()
+        //     ->minFiles(1)
+        //     ->maxFiles(20)
+        //     ->uploadingMessage('轮播图片上传中...')
+        //     ->imagePreviewHeight('100');
 
 
         // return Components\FileUpload::make('images')->label('产品轮播图')

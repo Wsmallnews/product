@@ -5,6 +5,7 @@ namespace Wsmallnews\Product\Repositories;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Wsmallnews\Product\Product;
+use Wsmallnews\Support\Filament\Tables\Columns\MediableImageColumn;
 
 class Columns
 {
@@ -27,13 +28,59 @@ class Columns
 
     public static function image()
     {
-        return Tables\Columns\ImageColumn::make('image')->label('图片');
+        return MediableImageColumn::make('image')->label('产品主图')
+            ->tag('main')
+            ->variant('thumbnail');
+
+
+        // return Tables\Columns\SpatieMediaLibraryImageColumn::make('image')
+        //     ->conversion('small')
+        //     ->collection('main')
+        //     ->label('图片');
+
+
+        // return Tables\Columns\ImageColumn::make('image')->label('图片');
     }
-    
-    public static function title()
+
+
+    public static function images()
     {
-        return Tables\Columns\TextColumn::make('title')->label('标题');
+        return MediableImageColumn::make('images')->label('产品轮播图')
+            ->tag('gallery')
+            ->variant('thumbnail')
+            ->limit(3)
+            ->limitedRemainingText(isSeparate: true);
+
+
+        // return Tables\Columns\SpatieMediaLibraryImageColumn::make('image')
+        //     ->conversion('small')
+        //     ->collection('main')
+        //     ->label('图片');
+
+
+        // return Tables\Columns\ImageColumn::make('image')->label('图片');
     }
+
+    
+    public static function title($showdescription = false)
+    {
+        return Tables\Columns\TextColumn::make('title')
+            ->description(fn($record) => $showdescription ? $record->subtitle : null)
+            ->limit(50)
+            ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
+                $state = $column->getState();
+
+                if (strlen($state) <= $column->getCharacterLimit()) {
+                    return null;
+                }
+
+                // Only render the tooltip if the column content exceeds the length limit.
+                return $state;
+            })
+            // ->lineClamp(3)
+            ->label('标题');
+    } 
+
     public static function type()
     {
         return Tables\Columns\TextColumn::make('type')->label('类型');
@@ -67,10 +114,21 @@ class Columns
                 ->alignLeft();
     }
 
+    public static function createdAt()
+    {
+        return Tables\Columns\TextColumn::make('created_at')
+            ->since()
+            ->dateTimeTooltip()
+            ->label('创建时间');
+    }
+
 
     public static function updatedAt()
     {
-        return Tables\Columns\TextColumn::make('updated_at')->label('更新时间');
+        return Tables\Columns\TextColumn::make('updated_at')
+            ->since()
+            ->dateTimeTooltip()
+            ->label('更新时间');
     }
 
 

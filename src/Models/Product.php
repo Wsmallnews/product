@@ -7,22 +7,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Image\Enums\Fit;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Plank\Mediable\MediableInterface;
+use Plank\Mediable\Mediable;
 use Spatie\Tags\HasTags;
 use Wsmallnews\Product\Product as ProductManager;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Support\Casts\MoneyCast;
 use Wsmallnews\Support\Models\SupportModel;
 
-class Product extends SupportModel implements HasMedia
+class Product extends SupportModel implements MediableInterface
 {
     use HasFactory;
     use HasTags;
     use SoftDeletes;
-    use InteractsWithMedia;
+    use Mediable;
 
     protected $table = 'sn_products';
 
@@ -38,61 +36,6 @@ class Product extends SupportModel implements HasMedia
         'options' => 'array',
     ];
 
-    // public function registerMediaConversions(?Media $media = null): void
-    // {
-    //     $this->addMediaConversion('medium')
-    //         ->fit(Fit::Contain, 750, 750)
-    //         ->keepOriginalImageFormat()     // 保持原始格式
-    //         ->nonQueued();
-    // }
-
-
-    public function registerMediaCollections(): void
-    {
-        $conversions = [
-            'small' => [
-                'width' => 300,
-                'height' => 300,
-            ],
-            'medium' => [
-                'width' => 500,
-                'height' => 500,
-            ],
-            'large' => [
-                'width' => 800,
-                'height' => 800,
-            ],
-        ];
-
-        $mainCollection = $this->addMediaCollection('main');
-        $galleryCollection = $this->addMediaCollection('gallery');
-
-        $fallbackUrl = ProductManager::getMediaConfig('fallback.url');
-        if ($fallbackUrl) {
-            $mainCollection = $mainCollection->useFallbackUrl($fallbackUrl);
-            $galleryCollection = $galleryCollection->useFallbackUrl($fallbackUrl);
-        }
-
-        $fallbackPath = ProductManager::getMediaConfig('fallback.path');
-        if ($fallbackPath) {
-            $mainCollection = $mainCollection->useFallbackPath($fallbackPath);
-            $galleryCollection = $galleryCollection->useFallbackPath($fallbackPath);
-        }
-
-        $mainCollection->registerMediaConversions(function (Media $media) use ($conversions) {
-            foreach ($conversions as $key => $conversion) {
-                $this->addMediaConversion($key)
-                    ->fit(
-                        Fit::Contain,
-                        $conversion['width'],
-                        $conversion['height']
-                    )
-                    ->keepOriginalImageFormat()     // 保持原始格式
-                    ->nonQueued();
-            }
-        });
-    }
-
     public function scopeShow($query)
     {
         return $query->whereIn('status', ['up', 'hidden']);
@@ -107,6 +50,7 @@ class Product extends SupportModel implements HasMedia
     {
         return $query->where('status', 'down');
     }
+    
     public function scopeHidden($query)
     {
         return $query->where('status', 'hidden');
