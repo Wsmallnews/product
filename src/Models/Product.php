@@ -2,6 +2,7 @@
 
 namespace Wsmallnews\Product\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute as CastAttribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Plank\Mediable\MediableInterface;
 use Plank\Mediable\Mediable;
 use Spatie\Tags\HasTags;
-use Wsmallnews\Product\Product as ProductManager;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Support\Casts\MoneyCast;
 use Wsmallnews\Support\Models\SupportModel;
@@ -50,7 +50,7 @@ class Product extends SupportModel implements MediableInterface
     {
         return $query->where('status', 'down');
     }
-    
+
     public function scopeHidden($query)
     {
         return $query->where('status', 'hidden');
@@ -60,6 +60,35 @@ class Product extends SupportModel implements MediableInterface
     public function stockUnit(): BelongsTo
     {
         return $this->belongsTo(UnitRepository::class, 'stock_unit', 'name');
+    }
+
+
+    public function mainUrl(): CastAttribute
+    {
+        return CastAttribute::make(
+            get: function (mixed $value, array $attributes): array {
+                $firstMedia = $this->firstMedia(['main']);
+                $url = [];
+                if ($this->relationLoaded('media')) {
+                    $url['thumbnail'] = $firstMedia?->findVariant('thumbnail')?->getUrl() ?? null;
+                    $url['medium'] = $firstMedia?->findVariant('medium')?->getUrl() ?? null;
+                    $url['large'] = $firstMedia?->findVariant('large')?->getUrl() ?? null;
+                    $url['original'] = $firstMedia?->getUrl() ?? null;
+                }
+
+                return $url;
+            }
+        );
+    }
+
+
+    public function galleryUrls(): CastAttribute
+    {
+        return CastAttribute::make(
+            get: function (mixed $value, array $attributes): array {
+                return $this->getMedia(['gallery'])->map(fn($media) => $media->getUrl())->toArray();
+            }
+        );
     }
 
 

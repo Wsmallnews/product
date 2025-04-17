@@ -26,7 +26,7 @@ class ProductList extends BaseComponent
 
     public function render()
     {
-        $query = Product::query()->scopeable(...$this->getScopeInfo());
+        $query = Product::query()->scopeable(...$this->getScopeInfo())->withMediaAndVariants(['main']);
 
         // 分页
         $this->products = $this->withPagination($query);

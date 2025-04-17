@@ -17,7 +17,7 @@ use Wsmallnews\Product\Product;
 })">
     <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white">
         <div class="w-full">
-            <x-sn-support::swiper :images="Product::filesUrl($product->images)" class="w-full" :has-thumb="true" :thumb-scale="20" thumb-position="left" />
+            <x-sn-support::swiper :images="$product->galleryUrls" class="w-full" :has-thumb="true" :thumb-scale="20" thumb-position="left" />
         </div>
 
         <div class="w-full flex flex-col">

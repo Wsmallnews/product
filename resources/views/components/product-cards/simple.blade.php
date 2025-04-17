@@ -10,8 +10,8 @@
 
 <x-sn-support::base.card class="w-full group flex rounded-md flex-col overflow-hidden" tag="a" :border="false" :href="$url" :should-open-url-in-new-tab="true" >
     <div class="w-full relative pb-[100%]">
-        @if (filled($product->image))
-            <img src="{{ Product::filesUrl($product->image) }}" class="size-full object-cover absolute transition duration-700 ease-out group-hover:scale-105" />
+        @if ($product->main_url)
+            <img src="{{ $product->main_url['medium'] ?? ($product->main_url['original'] ?? '') }}" class="size-full object-cover absolute transition duration-700 ease-out group-hover:scale-105" />
         @endif
     </div>
 

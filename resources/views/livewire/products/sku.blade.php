@@ -2,13 +2,13 @@
     $assetsUrl = config('filesystems.disks.' . config('filament.default_filesystem_disk') . '.url') . '/';
 @endphp
 
-<div class="w-full overflow-hidden" x-data="skuManager({
+<div class="w-full overflow-hidden pt-4" x-data="skuManager({
     product: @js($product),
     skus: @js($skus),
     skuPrices: @js($skuPrices)
 })">
 
-    
+
 
 
 
@@ -18,16 +18,16 @@
             <div class="mr-3 flex-none" x-text="sku.name"></div>
             <div class="flex flex-wrap grow">
                 <template x-for="child in sku.children">
-                    <button class="flex grow-0 shrink-0 basis-auto items-center mr-3 mb-3 bg-gray-500 rounded-md disabled:opacity-50" :class="{
-                        'bg-red-500': currentSkuArray[child.parent_id] == child.id,
-                        'text-white': currentSkuArray[child.parent_id] == child.id,
+                    <button class="flex grow-0 shrink-0 basis-auto items-center mr-3 mb-3 rounded-md disabled:opacity-50 ring-1" :class="{
+                        'bg-primary-600 text-white ring-primary-600': currentSkuArray[child.parent_id] == child.id,
+                        'ring-gray-300 hover:ring-primary-600': currentSkuArray[child.parent_id] != child.id,
                     }" :disabled="child.disabled"  @click="onSelectSku(sku.id, child.id)">
                         <template x-if="child.image">
                             <div class="w-7 h-7 overflow-hidden rounded-md">
                                 <img class="w-full h-full object-contain" :src="'{{$assetsUrl}}' + child.image" :alt="child.name"/>
                             </div>
                         </template>
-                        <div class="flex-1 truncate px-2" x-text="child.name"></div>
+                        <div class="flex-1 truncate px-3 py-1" x-text="child.name"></div>
                     </button>
                 </template>
             </div>
