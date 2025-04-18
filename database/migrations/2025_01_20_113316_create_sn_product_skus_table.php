@@ -16,7 +16,7 @@ return new class extends Migration
             $table->comment('产品规格');
             $table->engine = 'InnoDB';
             $table->id();
-            $table->unsignedBigInteger('product_id')->default(0)->comment('产品');
+            $table->foreignId('product_id')->constrained('sn_products')->cascadeOnDelete();
             $table->unsignedBigInteger('parent_id')->default(0)->comment('上级');
             $table->string('name')->nullable()->comment('名称');
             $table->string('image')->nullable()->comment('规格图');
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->comment('产品规格价格');
             $table->engine = 'InnoDB';
             $table->id();
-            $table->unsignedBigInteger('product_id')->default(0)->comment('产品');
+            $table->foreignId('product_id')->constrained('sn_products')->cascadeOnDelete();
             $table->string('product_sku_ids')->nullable()->comment('规格');
             $table->string('product_sku_text')->nullable()->comment('规格中文');
             $table->string('product_sn')->nullable()->comment('货号');

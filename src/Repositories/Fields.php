@@ -289,6 +289,11 @@ class Fields
                 Components\Hidden::make('status')->default(Enums\ProductStatus::Up->value),
                 Components\Hidden::make('sku_type')->default(Enums\ProductSkuType::Single->value),
             ])
+            ->mutateRelationshipDataBeforeSaveUsing(function ($data) {
+                $data['product_sku_ids'] = null;
+                $data['product_sku_text'] = null;
+                return $data;
+            })
             ->columns(3)
             ->columnSpanFull();
     }

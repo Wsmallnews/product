@@ -112,4 +112,9 @@ class Product extends SupportModel implements MediableInterface
     {
         return $this->skuPrices()->one()->oldestOfMany();
     }
+
+    public function allSkus(): HasMany
+    {
+        return $this->hasMany(Sku::class, 'product_id', 'id')->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+    }
 }

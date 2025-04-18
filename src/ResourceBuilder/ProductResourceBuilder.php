@@ -12,7 +12,6 @@ use Wsmallnews\Product\Repositories\Fields as FieldsRepository;
 use Wsmallnews\Product\Repositories\Columns as ColumnsRepository;
 use Wsmallnews\Product\Repositories\Filters as FiltersRepository;
 
-
 class ProductResourceBuilder implements ResourceBuilderInterface
 {
 
