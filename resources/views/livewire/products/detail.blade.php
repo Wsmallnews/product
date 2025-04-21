@@ -26,6 +26,7 @@ use Wsmallnews\Product\Product;
 
             <x-sn-support::amount :amount="$choosedSkuPrice ? $choosedSkuPrice->price : $product->price" />
 
+            {{-- <livewire:sn-product-sku-test :product="$product" /> --}}
             <livewire:sn-product-sku :product="$product" />
 
             <div class="" @click="buy">
