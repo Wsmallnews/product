@@ -1,26 +1,13 @@
-@php
-    $checkIsChoosed = function ($parentId, $id): bool
-    {
-        return isset($currentChoosedSkus[$parentId]) && $currentChoosedSkus[$parentId] == $id;
-    }
-
-@endphp
-
-
-<div class="w-full overflow-hidden pt-4">
+<div class="w-full overflow-hidden">
     @foreach ($this->showSkus as $sku)
-        <div class="flex">
-            <div class="mr-3 flex-none">{{ $sku['name'] }}</div>
+        <div class="flex items-center">
+            <div class="w-16 mr-4 text-sm text-gray-600 shrink-0 grow-0">{{ $sku['name'] }}</div>
             <div class="flex flex-wrap grow">
                 @foreach ($sku['children'] as $child)
-                    {{-- <button class="flex grow-0 shrink-0 basis-auto items-center mr-3 mb-3 rounded-md disabled:opacity-50 ring-1" :class="{
-                        'bg-primary-600 text-white ring-primary-600': currentSkuArray[child.parent_id] == child.id,
-                        'ring-gray-300 hover:ring-primary-600': currentSkuArray[child.parent_id] != child.id,
-                    }"   > --}}
                     <button @class([
                             'flex grow-0 shrink-0 basis-auto items-center mr-3 mb-3 rounded-md disabled:opacity-50 ring-1',
-                            'bg-primary-600 text-white ring-primary-600' => $checkIsChoosed($sku['id'], $child['id']),
-                            'ring-gray-300 hover:ring-primary-600' => !$checkIsChoosed($sku['id'], $child['id']),
+                            'bg-primary-600 text-white ring-primary-600' => $this->checkIsChoosed($sku['id'], $child['id']),
+                            'ring-gray-300 hover:ring-primary-600' => !$this->checkIsChoosed($sku['id'], $child['id']),
                         ])
                         :disabled="{{ $child['disabled'] }}"
                         wire:click="choose({{$sku['id']}}, {{$child['id']}})"

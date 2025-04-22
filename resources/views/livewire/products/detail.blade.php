@@ -11,9 +11,7 @@ use Wsmallnews\Product\Product;
 @endassets
 
 <div class="w-full" x-data="detailManager({
-    product: @js($product),
-    skus: @js($skus),
-    skuPrices: @js($skuPrices)
+    product: @js($product)
 })">
     <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white">
         <div class="w-full">
@@ -24,14 +22,24 @@ use Wsmallnews\Product\Product;
             <div class="text-xl font-bold">{{$product->title}}</div>
             <div class="text-base text-gray-600">{{$product->subtitle}}</div>
 
-            <x-sn-support::amount :amount="$choosedSkuPrice ? $choosedSkuPrice->price : $product->price" />
+            <div class="mt-4">
+                <x-sn-support::amount :amount="$choosedSkuPrice ? $choosedSkuPrice->price : $product->price" />
+            </div>
 
-            {{-- <livewire:sn-product-sku-test :product="$product" /> --}}
+            {{-- 选择规格 --}}
             <livewire:sn-product-sku :product="$product" />
 
-            <div class="" @click="buy">
-                立即购买
+            {{-- 数量 --}}
+            <div class="flex items-center">
+                <div class="w-16 mr-4 text-sm text-gray-600 shrink-0 grow-0">数量</div>
+                <div class="w-32 shrink-0 grow-0">
+                    <x-sn-support::input.step-number :min="1" wire:model="productNum" />
+                </div>
             </div>
+
+            <x-filament::button wire:click="buy" size="xl" class="w-48">
+                立即购买
+            </x-filament::button>
         </div>
     </div>
 
@@ -86,13 +94,9 @@ use Wsmallnews\Product\Product;
 <script>
     function detailManager({
         product,
-        skus,
-        skuPrices
     }) {
         return {
             product,
-            skus,
-            skuPrices,
             currentTab: null,
             init () {
                 // 监听滚动条
@@ -107,7 +111,7 @@ use Wsmallnews\Product\Product;
                         }
                     });
                 });
-            }
+            },
         }
     }
 </script>

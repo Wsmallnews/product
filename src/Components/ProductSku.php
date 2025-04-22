@@ -4,6 +4,7 @@ namespace Wsmallnews\Product\Components;
 
 use Illuminate\Support\Collection;
 use Wsmallnews\Product\Models\Product;
+use Wsmallnews\Product\Models\SkuPrice;
 use Wsmallnews\Support\Components\BaseComponent;
 
 class ProductSku extends BaseComponent
@@ -11,25 +12,34 @@ class ProductSku extends BaseComponent
 
     public Product $product;
 
-    // 当前选中的 skuPrice
-    public $choosedSkuPrice = null;
-
     // 展示的 skus
-    public $showSkus = [];
+    public array $showSkus = [];
+
+    // 当前选中的 skuPrice
+    public ?SkuPrice $choosedSkuPrice = null;
 
     // 当前已选择的skus
-    public $currentChoosedSkus = [];
+    public array $currentChoosedSkus = [];
 
-    public Collection $skus;
-    public Collection $skuPrices;
+    protected Collection $skus;
+    protected Collection $skuPrices;
 
-    public function mount()
+    public function boot()
     {
+        // 这里使用 mount 不行，
+        // 1、后续请求 product 会被重新查询，并且不会加载关系，就需要在boot 手动加载 关系
+        // 2、如果在 把  skus 和 skuPrices 设置成 public 也不行，后续请求的 skus 不会自动关联 children
+        // 
         $this->product->loadMissing('skus.children');
         $this->product->loadMissing('skuPrices');
 
         $this->skus = $this->product->skus;
         $this->skuPrices = $this->product->skuPrices;
+    }
+
+
+    public function mount()
+    {
         $this->showSkus = $this->skus->toArray();
 
         $this->operShowSkus(false);
@@ -40,7 +50,7 @@ class ProductSku extends BaseComponent
     {
         $isChecked = true; // 选中 or 取消选中
         if (isset($this->currentChoosedSkus[$parentSkuId]) && $this->currentChoosedSkus[$parentSkuId] == $skuId) {
-            // 点击已被选中的，删除并填充 ''
+            // 点击已被选中的，删除选中
             $isChecked = false;
             unset($this->currentChoosedSkus[$parentSkuId]);
         } else {
@@ -55,9 +65,18 @@ class ProductSku extends BaseComponent
             $this->choosedSkuPrice = null;
         }
 
-        dd($this->currentChoosedSkus);
+        if ($this->choosedSkuPrice) {
+            $this->dispatch('choosed-sku-price', skuPriceId: $this->choosedSkuPrice->id);
+        }
 
         $this->operShowSkus($isChecked, $parentSkuId, $skuId);
+    }
+
+
+
+    public function checkIsChoosed($parentId, $id): bool
+    {
+        return isset($this->currentChoosedSkus[$parentId]) && $this->currentChoosedSkus[$parentId] == $id;
     }
 
 
@@ -155,8 +174,6 @@ class ProductSku extends BaseComponent
                 }
             }
         }
-
-        // dd($this->showSkus);
     }
 
 

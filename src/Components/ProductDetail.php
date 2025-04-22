@@ -3,6 +3,8 @@
 namespace Wsmallnews\Product\Components;
 
 use Illuminate\Support\Collection;
+use Filament\Notifications\Notification;
+use Livewire\Attributes\On;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Product\Models\Product;
 use Wsmallnews\Product\Models\SkuPrice;
@@ -12,17 +14,9 @@ class ProductDetail extends BaseComponent
 {
     public Product $product;
 
+    public ?SkuPrice $choosedSkuPrice = null;
 
-    public SkuPrice $choosedSkuPrice;
-
-    public array $buyInfo = [
-        "product_id" => 0,
-        "product_sku_price_id" => 0,
-        "product_num" => 1,
-        "product_attributes" => [],
-        "delivery_type" => "",
-    ];
-
+    public int $productNum = 1;
 
     public function mount($id)
     {
@@ -35,11 +29,42 @@ class ProductDetail extends BaseComponent
 
         $this->product = $query->findOrFail($id);
 
-        // if ($this->product->sku_type == Enums\ProductSkuType::Single) {
-        //     $this->choosedSkuPrice = $this->product->skuPrice;
-        // }
+        if ($this->product->sku_type == Enums\ProductSkuType::Single) {
+            $this->choosedSkuPrice = $this->product->skuPrice;
+        }
     }
 
+
+    public function buy()
+    {
+        if (!$this->choosedSkuPrice) {
+            Notification::make()
+                ->title('请选择规格')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $this->dispatch('product-buy', [
+            'type' => 'product',
+            'from' => 'product-detail',
+            'relate_items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'product_sku_price_id' => $this->choosedSkuPrice->id,
+                    'product_num' => $this->productNum,
+                    'product_attributes' => [],
+                ]
+            ],
+        ]);
+    }
+
+
+    #[On('choosed-sku-price')]
+    public function choosedSkuPrice($skuPriceId)
+    {
+        $this->choosedSkuPrice = $this->product->skuPrices->firstWhere('id', $skuPriceId);
+    }
 
 
     public function render()
