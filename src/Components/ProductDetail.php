@@ -45,17 +45,17 @@ class ProductDetail extends BaseComponent
             return;
         }
 
-        $this->dispatch('product-buy', [
+        $this->dispatch('product-buy', ...[
             'type' => 'product',
             'from' => 'product-detail',
-            'relate_items' => [
+            'relate_items' => json_encode([
                 [
                     'product_id' => $this->product->id,
                     'product_sku_price_id' => $this->choosedSkuPrice->id,
                     'product_num' => $this->productNum,
                     'product_attributes' => [],
                 ]
-            ],
+            ])
         ]);
     }
 

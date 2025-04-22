@@ -18,13 +18,13 @@ use Wsmallnews\Product\Product;
             <x-sn-support::swiper :images="$product->galleryUrls" class="w-full" :has-thumb="true" :thumb-scale="20" thumb-position="left" />
         </div>
 
-        <div class="w-full flex flex-col">
-            <div class="text-xl font-bold">{{$product->title}}</div>
-            <div class="text-base text-gray-600">{{$product->subtitle}}</div>
-
-            <div class="mt-4">
-                <x-sn-support::amount :amount="$choosedSkuPrice ? $choosedSkuPrice->price : $product->price" />
+        <div class="w-full flex flex-col gap-y-4">
+            <div class="flex flex-col gap-y-1">
+                <div class="text-xl font-bold">{{$product->title}}</div>
+                <div class="text-base text-gray-600">{{$product->subtitle}}</div>
             </div>
+
+            <x-sn-support::amount :amount="$choosedSkuPrice ? $choosedSkuPrice->price : $product->price" />
 
             {{-- 选择规格 --}}
             <livewire:sn-product-sku :product="$product" />
