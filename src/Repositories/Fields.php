@@ -268,7 +268,6 @@ class Fields
             ->label('规格')
             ->options(Enums\ProductSkuType::class)
             ->default(Enums\ProductSkuType::Single->value)
-            // ->afterStateUpdated(fn(Set $set, ?string $state) => $set('skuPrice.sku_type', $state))
             ->live()
             ->inline();
     }
@@ -278,7 +277,7 @@ class Fields
     public static function skuSimple()
     {
         return Components\Group::make()
-            ->relationship('skuPrice')
+            ->relationship('variant')
             ->schema([
                 static::originalPrice()->columnSpan(1),
                 static::costPrice()->columnSpan(1),
@@ -322,7 +321,7 @@ class Fields
                     'childrenOrderColumn' => 'order_column',
                 ],
                 'recursions' => [
-                    'relationship' => 'skuPrices',
+                    'relationship' => 'variants',
                     'savingUsing' => function (Get $get, $record, $recursion) {       // 处理 recursions 自定义字段
                         $recursion['product_sku_text'] = $recursion['arrange_texts'] ?? [];
                         $recursion['product_sn'] = $recursion['product_sn'] ?? null;
@@ -333,7 +332,7 @@ class Fields
                         $recursion['price'] = $recursion['price'] ?? 0;
                         $recursion['stock'] = intval($recursion['stock'] ?? 0);
                         $recursion['weight'] = floatval($recursion['weight'] ?? 0);
-                        $recursion['status'] = $recursion['status'] ?? Enums\SkuPriceStatus::Up;
+                        $recursion['status'] = $recursion['status'] ?? Enums\VariantStatus::Up;
 
                         unset($recursion['arrange_texts']);     // 删除原始字段
 
@@ -486,10 +485,10 @@ class Fields
      *
      * @return Components\Hidden
      */
-    public static function hiddenSkuPriceStatus()
+    public static function hiddenVariantStatus()
     {
         return Components\Hidden::make('status')
-            ->default(Enums\SkuPriceStatus::Up);
+            ->default(Enums\VariantStatus::Up);
     }
 
 

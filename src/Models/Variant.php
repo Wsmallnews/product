@@ -7,10 +7,10 @@ use Wsmallnews\Support\Casts\ImplodeCast;
 use Wsmallnews\Support\Casts\MoneyCast;
 use Wsmallnews\Support\Models\SupportModel;
 
-class SkuPrice extends SupportModel
+class Variant extends SupportModel
 {
 
-    protected $table = 'sn_product_sku_prices';
+    protected $table = 'sn_product_variants';
 
     protected $guarded = [];
 
@@ -21,7 +21,7 @@ class SkuPrice extends SupportModel
         'original_price' => MoneyCast::class,
         'cost_price' => MoneyCast::class,
         'price' => MoneyCast::class,
-        'status' => Enums\SkuPriceStatus::class,
+        'status' => Enums\VariantStatus::class,
     ];
 
     public function scopeUp($query)

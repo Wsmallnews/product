@@ -24,7 +24,7 @@ use Wsmallnews\Product\Product;
                 <div class="text-base text-gray-600">{{$product->subtitle}}</div>
             </div>
 
-            <x-sn-support::amount :amount="$choosedSkuPrice ? $choosedSkuPrice->price : $product->price" />
+            <x-sn-support::amount :amount="$choosedVariant ? $choosedVariant->price : $product->price" />
 
             {{-- 选择规格 --}}
             <livewire:sn-product-sku :product="$product" />

@@ -24,8 +24,8 @@ return new class extends Migration
         });
 
 
-        Schema::create('sn_product_sku_prices', function (Blueprint $table) {
-            $table->comment('产品规格价格');
+        Schema::create('sn_product_variants', function (Blueprint $table) {
+            $table->comment('产品变体');
             $table->engine = 'InnoDB';
             $table->id();
             $table->foreignId('product_id')->constrained('sn_products')->cascadeOnDelete();
@@ -52,6 +52,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('sn_product_skus');
 
-        Schema::dropIfExists('sn_product_sku_prices');
+        Schema::dropIfExists('sn_product_variants');
     }
 };

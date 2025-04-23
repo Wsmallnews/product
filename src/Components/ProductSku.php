@@ -4,7 +4,7 @@ namespace Wsmallnews\Product\Components;
 
 use Illuminate\Support\Collection;
 use Wsmallnews\Product\Models\Product;
-use Wsmallnews\Product\Models\SkuPrice;
+use Wsmallnews\Product\Models\Variant;
 use Wsmallnews\Support\Components\BaseComponent;
 
 class ProductSku extends BaseComponent
@@ -15,26 +15,26 @@ class ProductSku extends BaseComponent
     // 展示的 skus
     public array $showSkus = [];
 
-    // 当前选中的 skuPrice
-    public ?SkuPrice $choosedSkuPrice = null;
+    // 当前选中的 variant
+    public ?Variant $choosedVariant = null;
 
     // 当前已选择的skus
     public array $currentChoosedSkus = [];
 
     protected Collection $skus;
-    protected Collection $skuPrices;
+    protected Collection $variants;
 
     public function boot()
     {
         // 这里使用 mount 不行，
         // 1、后续请求 product 会被重新查询，并且不会加载关系，就需要在boot 手动加载 关系
-        // 2、如果在 把  skus 和 skuPrices 设置成 public 也不行，后续请求的 skus 不会自动关联 children
+        // 2、如果在 把  skus 和 variants 设置成 public 也不行，后续请求的 skus 不会自动关联 children
         // 
         $this->product->loadMissing('skus.children');
-        $this->product->loadMissing('skuPrices');
+        $this->product->loadMissing('variants');
 
         $this->skus = $this->product->skus;
-        $this->skuPrices = $this->product->skuPrices;
+        $this->variants = $this->product->variants;
     }
 
 
@@ -58,15 +58,15 @@ class ProductSku extends BaseComponent
             $this->currentChoosedSkus[$parentSkuId] = $skuId;
         }
 
-        $canUseSkuPrices = $this->getCanUseSkuPrices(); // 获取当前所选的所有 skuPrice
-        if (count($this->currentChoosedSkus) == $this->skus->count() && $canUseSkuPrices->isNotEmpty()) {
-            $this->choosedSkuPrice = $canUseSkuPrices->first(); // 选中第一个
+        $canUseVariants = $this->getCanUseVariants(); // 获取当前所选的所有 variants
+        if (count($this->currentChoosedSkus) == $this->skus->count() && $canUseVariants->isNotEmpty()) {
+            $this->choosedVariant = $canUseVariants->first(); // 选中第一个
         } else {
-            $this->choosedSkuPrice = null;
+            $this->choosedVariant = null;
         }
 
-        if ($this->choosedSkuPrice) {
-            $this->dispatch('choosed-sku-price', skuPriceId: $this->choosedSkuPrice->id);
+        if ($this->choosedVariant) {
+            $this->dispatch('choosed-variant', variantId: $this->choosedVariant->id);
         }
 
         $this->operShowSkus($isChecked, $parentSkuId, $skuId);
@@ -81,53 +81,53 @@ class ProductSku extends BaseComponent
 
 
     /**
-     * 当前所选规格下，获取所有有库存的 skuPrice
+     * 当前所选规格下，获取所有有库存的 variants
      */
-    protected function getCanUseSkuPrices ()
+    protected function getCanUseVariants ()
     {
-        $canUseSkuPrices = collect([]);
-        foreach ($this->skuPrices as $skuPrice) {
-            if ($this->product->stock_type == 'stock' && $skuPrice->stock <= 0) {        // 商品控制库存，并且库存小于 0
+        $canUseVariants = collect([]);
+        foreach ($this->variants as $variant) {
+            if ($this->product->stock_type == 'stock' && $variant->stock <= 0) {        // 商品控制库存，并且库存小于 0
                 continue;
             }
 
             $isOk = true;
             foreach ($this->currentChoosedSkus as $parentId => $sku) {
-                if (!in_array($sku, $skuPrice->product_sku_ids)) {      // 没有被选中
+                if (!in_array($sku, $variant->product_sku_ids)) {      // 没有被选中
                     $isOk = false;
                 }
             }
 
             if ($isOk) {
-                $canUseSkuPrices->push($skuPrice);
+                $canUseVariants->push($variant);
             }
         }
 
-        return $canUseSkuPrices;
+        return $canUseVariants;
     }
 
 
 
     protected function operShowSkus($isChecked, $parentSkuId = 0, $skuId = 0)
     {
-        $canUseSkuPrices = collect([]);  // 所有可以选择的 skuPrice
+        $canUseVariants = collect([]);  // 所有可以选择的 variants
         if ($isChecked) {
-            foreach ($this->skuPrices as $skuPrice) {
-                if ($this->product->stock_type == 'stock' && $skuPrice->stock <= 0) {        // 商品控制库存，并且库存小于 0
+            foreach ($this->variants as $variant) {
+                if ($this->product->stock_type == 'stock' && $variant->stock <= 0) {        // 商品控制库存，并且库存小于 0
                     continue;
                 }
-                if (in_array($skuId, $skuPrice->product_sku_ids)) {
-                    $canUseSkuPrices->push($skuPrice);
+                if (in_array($skuId, $variant->product_sku_ids)) {
+                    $canUseVariants->push($variant);
                 }
             }
         } else {
-            // 当前所选规格下，所有可以选择的 skuPrice
-            $canUseSkuPrices = $this->getCanUseSkuPrices();
+            // 当前所选规格下，所有可以选择的 variants
+            $canUseVariants = $this->getCanUseVariants();
         }
 
-        $noChooseSkuIds = []; // 所有可以选择的 skuPrice 的 id
-        foreach ($canUseSkuPrices as $skuPrice) {
-            $noChooseSkuIds = array_merge($noChooseSkuIds, $skuPrice->product_sku_ids);
+        $noChooseSkuIds = []; // 所有可以选择的 variants 的 id
+        foreach ($canUseVariants as $canUsevariant) {
+            $noChooseSkuIds = array_merge($noChooseSkuIds, $canUsevariant->product_sku_ids);
         }
         // 去重
         $noChooseSkuIds = array_values(array_filter(array_unique($noChooseSkuIds)));

@@ -25,7 +25,7 @@ use Wsmallnews\Product\Models\Attribute;
 use Wsmallnews\Product\Models\AttributeRepository;
 use Wsmallnews\Product\Models\Product as ProductModel;
 use Wsmallnews\Product\Models\Sku;
-use Wsmallnews\Product\Models\SkuPrice;
+use Wsmallnews\Product\Models\Variant;
 use Wsmallnews\Product\Models\UnitRepository;
 
 class ProductServiceProvider extends PackageServiceProvider
@@ -83,7 +83,7 @@ class ProductServiceProvider extends PackageServiceProvider
             'sn_product_attribute_repository' => AttributeRepository::class,
             'sn_product' => ProductModel::class,
             'sn_product_sku' => Sku::class,
-            'sn_product_sku_price' => SkuPrice::class,
+            'sn_product_variant' => Variant::class,
             'sn_product_unit_repository' => UnitRepository::class,
         ]);
 

@@ -5,7 +5,7 @@
 <div class="w-full overflow-hidden pt-4" x-data="skuManager({
     product: @js($product),
     skus: @js($skus),
-    skuPrices: @js($skuPrices)
+    variants: @js($variants)
 })">
     <template x-for="sku in skus">
         <div class="flex">
@@ -34,21 +34,21 @@
 function skuManager({
     product,
     skus,
-    skuPrices
+    variants
 }) {
     return {
         product,
         skus: [],
-        skuPrices: [],
+        variants: [],
         currentSkuArray: [],
-        selectedSkuPrice: {},
+        selectedVariant: {},
         init () {
             this.skus = skus;
             console.log(this.skus, 'this.skus');
-            this.skuPrices = skuPrices;
+            this.variants = variants;
 
-            this.$watch('selectedSkuPrice', (newVal, oldVal) => {
-                this.$dispatch('sku-choosed', {skuPrice: newVal});
+            this.$watch('selectedVariant', (newVal, oldVal) => {
+                this.$dispatch('sku-choosed', {variant: newVal});
             });
 
             this.changeDisabled(false);
@@ -73,67 +73,67 @@ function skuManager({
                 }
             });
 
-            // 当前所选规格下，所有可以选择的 skuPrice
-            let canSkuPrices = this.getCanUseSkuPrices();
+            // 当前所选规格下，所有可以选择的 variant
+            let canVariants = this.getCanUseVariants();
 
             // 判断所有规格大类是否选择完成
-            if (chooseSkuId.length == this.skus.length && canSkuPrices.length) {
-                canSkuPrices[0].product_num = this.selectedSkuPrice.product_num || 1;       // 要购买的数量
-                this.selectedSkuPrice = canSkuPrices[0];
+            if (chooseSkuId.length == this.skus.length && canVariants.length) {
+                canVariants[0].product_num = this.selectedVariant.product_num || 1;       // 要购买的数量
+                this.selectedVariant = canVariants[0];
             } else {
-                this.selectedSkuPrice = {};
+                this.selectedVariant = {};
             }
 
             // 改变规格项禁用状态
             this.changeDisabled(isChecked, pId, skuId);
         },
-        getCanUseSkuPrices () {          // 当前所选规格下，获取所有有库存的 skuPrice
-            let newPrices = [];
+        getCanUseVariants () {          // 当前所选规格下，获取所有有库存的 variant
+            let newVariants = [];
 
-            for (let skuPrice of this.skuPrices) {
-                if (this.product.stock_type == 'stock' && skuPrice.stock <= 0) {        // 商品控制库存，并且库存小于 0
+            for (let variant of this.variants) {
+                if (this.product.stock_type == 'stock' && variant.stock <= 0) {        // 商品控制库存，并且库存小于 0
                     // || price.stock < this.goodsNum		不判断是否大于当前选择数量，在 uni-number-box 判断，并且 取 stock 和 goods_num 的小值
                     continue;
                 }
                 var isOk = true;
 
                 this.currentSkuArray.forEach((sku) => {
-                    // sku 不为空，并且，这个 条 skuPrice 没有被选中,则排除
-                    if (sku.toString() != '' && skuPrice.product_sku_ids.indexOf(sku.toString()) < 0) {
+                    // sku 不为空，并且，这个 条 variant 没有被选中,则排除
+                    if (sku.toString() != '' && variant.product_sku_ids.indexOf(sku.toString()) < 0) {
                         isOk = false;
                     }
                 });
 
                 if (isOk) {
-                    newPrices.push(skuPrice);
+                    newVariants.push(variant);
                 }
             }
 
-            return newPrices;
+            return newVariants;
         },
         changeDisabled(isChecked = false, pId = 0, skuId = 0) {         // 改变禁用状态
-            let newPrices = []; // 所有可以选择的 skuPrice
+            let newVariants = []; // 所有可以选择的 variant
 
             if (isChecked) {                            // 选中规格
-                // 当前点击选中规格下的 所有可用 skuPrice
-                for (let skuPrice of this.skuPrices) {
-                    if (this.product.stock_type == 'stock' && skuPrice.stock <= 0) {
+                // 当前点击选中规格下的 所有可用 variant
+                for (let variant of this.variants) {
+                    if (this.product.stock_type == 'stock' && variant.stock <= 0) {
                         // this.goodsNum 不判断是否大于当前选择数量，在 uni-number-box 判断，并且 取 stock 和 goods_num 的小值
                         continue;
                     }
-                    if (skuPrice.product_sku_ids.indexOf(skuId.toString()) >= 0) {
-                        newPrices.push(skuPrice);
+                    if (variant.product_sku_ids.indexOf(skuId.toString()) >= 0) {
+                        newVariants.push(variant);
                     }
                 }
             } else {                                    // 取消选中
-                // 当前所选规格下，所有可以选择的 skuPrice
-                newPrices = this.getCanUseSkuPrices();
+                // 当前所选规格下，所有可以选择的 variant
+                newVariants = this.getCanUseVariants();
             }
 
             // 所有存在并且有库存未选择的规格项 的 子项 id
             let noChooseSkuIds = [];
-            for (let newSkuPrice of newPrices) {
-                noChooseSkuIds = noChooseSkuIds.concat(newSkuPrice.product_sku_ids);
+            for (let newVariant of newVariants) {
+                noChooseSkuIds = noChooseSkuIds.concat(newVariant.product_sku_ids);
             }
 
             // 去重

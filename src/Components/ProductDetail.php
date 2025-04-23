@@ -7,14 +7,14 @@ use Filament\Notifications\Notification;
 use Livewire\Attributes\On;
 use Wsmallnews\Product\Enums;
 use Wsmallnews\Product\Models\Product;
-use Wsmallnews\Product\Models\SkuPrice;
+use Wsmallnews\Product\Models\Variant;
 use Wsmallnews\Support\Components\BaseComponent;
 
 class ProductDetail extends BaseComponent
 {
     public Product $product;
 
-    public ?SkuPrice $choosedSkuPrice = null;
+    public ?Variant $choosedVariant = null;
 
     public int $productNum = 1;
 
@@ -30,14 +30,14 @@ class ProductDetail extends BaseComponent
         $this->product = $query->findOrFail($id);
 
         if ($this->product->sku_type == Enums\ProductSkuType::Single) {
-            $this->choosedSkuPrice = $this->product->skuPrice;
+            $this->choosedVariant = $this->product->variant;
         }
     }
 
 
     public function buy()
     {
-        if (!$this->choosedSkuPrice) {
+        if (!$this->choosedVariant) {
             Notification::make()
                 ->title('请选择规格')
                 ->danger()
@@ -51,7 +51,7 @@ class ProductDetail extends BaseComponent
             'relate_items' => json_encode([
                 [
                     'product_id' => $this->product->id,
-                    'product_sku_price_id' => $this->choosedSkuPrice->id,
+                    'product_variant_id' => $this->choosedVariant->id,
                     'product_num' => $this->productNum,
                     'product_attributes' => [],
                 ]
@@ -60,10 +60,10 @@ class ProductDetail extends BaseComponent
     }
 
 
-    #[On('choosed-sku-price')]
-    public function choosedSkuPrice($skuPriceId)
+    #[On('choosed-variant')]
+    public function choosedVariant($variantId)
     {
-        $this->choosedSkuPrice = $this->product->skuPrices->firstWhere('id', $skuPriceId);
+        $this->choosedVariant = $this->product->variants->firstWhere('id', $variantId);
     }
 
 
@@ -71,8 +71,6 @@ class ProductDetail extends BaseComponent
     {
         return view('sn-product::livewire.products.detail', [
             'product' => $this->product,
-            'skus' => $this->product->skus,
-            'skuPrices' => $this->product->skuPrices
         ])->title('产品详情');
     }
 }

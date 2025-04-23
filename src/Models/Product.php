@@ -102,15 +102,15 @@ class Product extends SupportModel implements MediableInterface
         return $this->hasMany(Attribute::class, 'product_id')->where('attribute_parent_id', 0)->orderBy('order_column', 'desc')->orderBy('id', 'asc');
     }
 
-    public function skuPrices(): HasMany
+    public function variants(): HasMany
     {
-        return $this->hasMany(SkuPrice::class, 'product_id');
+        return $this->hasMany(Variant::class, 'product_id');
     }
 
 
-    public function skuPrice(): HasOne
+    public function variant(): HasOne
     {
-        return $this->skuPrices()->one()->oldestOfMany();
+        return $this->variants()->one()->oldestOfMany();
     }
 
     public function allSkus(): HasMany

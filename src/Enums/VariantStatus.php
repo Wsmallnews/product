@@ -7,7 +7,7 @@ use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 use Wsmallnews\Support\Enums\Traits\EnumHelper;
 
-Enum SkuPriceStatus :string implements HasLabel, HasIcon, HasColor
+Enum VariantStatus :string implements HasLabel, HasIcon, HasColor
 {
 
     use EnumHelper;
