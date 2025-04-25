@@ -1,6 +1,6 @@
-<div class="flex flex-col w-full overflow-hidden gap-y-4">
+<div class="flex flex-col w-full gap-y-4">
     @foreach ($this->showSkus as $sku)
-        <div class="flex items-start py-1">
+        <div class="flex items-start">
             <div class="w-16 mr-4 text-sm text-gray-600 shrink-0 grow-0 py-2">{{ $sku['name'] }}</div>
             <div class="flex flex-wrap gap-4">
                 @foreach ($sku['children'] as $child)

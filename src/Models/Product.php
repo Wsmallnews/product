@@ -57,12 +57,6 @@ class Product extends SupportModel implements MediableInterface
     }
 
 
-    public function stockUnit(): BelongsTo
-    {
-        return $this->belongsTo(UnitRepository::class, 'stock_unit', 'name');
-    }
-
-
     public function mainUrl(): CastAttribute
     {
         return CastAttribute::make(
@@ -89,6 +83,12 @@ class Product extends SupportModel implements MediableInterface
                 return $this->getMedia(['gallery'])->map(fn($media) => $media->getUrl())->toArray();
             }
         );
+    }
+
+    
+    public function stockUnit(): BelongsTo
+    {
+        return $this->belongsTo(UnitRepository::class, 'stock_unit', 'name');
     }
 
 
