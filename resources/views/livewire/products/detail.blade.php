@@ -32,7 +32,7 @@ use Wsmallnews\Product\Product;
             {{-- 数量 --}}
             <div class="flex items-center">
                 <div class="w-16 mr-4 text-sm text-gray-600 shrink-0 grow-0">数量</div>
-                <div class="w-32 shrink-0 grow-0">
+                <div class="w-40 shrink-0 grow-0">
                     <x-sn-support::input.step-number :min="1" wire:model="productNum" />
                 </div>
             </div>
