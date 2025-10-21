@@ -8,9 +8,11 @@ use Filament\Panel;
 use Wsmallnews\Product\Resources\ProductResource;
 use Wsmallnews\Product\Resources\AttributeRepositoryResource;
 use Wsmallnews\Product\Resources\UnitRepositoryResource;
+use Wsmallnews\Product\Traits\PluginTrait;
 
 class ProductPlugin implements Plugin
 {
+    use PluginTrait;
 
     /**
      * panel 加载插件 Self::make()
