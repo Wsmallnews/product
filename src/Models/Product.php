@@ -2,119 +2,163 @@
 
 namespace Wsmallnews\Product\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute as CastAttribute;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Plank\Mediable\MediableInterface;
-use Plank\Mediable\Mediable;
-use Spatie\Tags\HasTags;
+use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Wsmallnews\Category\Support\Utils as CategoryUtils;
+use Wsmallnews\Preference\Models\Concerns\Preferenceable;
+use Wsmallnews\Preference\Models\Concerns\Preferenceable\Viewable;
 use Wsmallnews\Product\Enums;
+use Wsmallnews\Support\Casts\CounterCast;
 use Wsmallnews\Support\Casts\MoneyCast;
+use Wsmallnews\Support\Contracts\HasSnSubject;
+use Wsmallnews\Support\Models\Concerns\HasActivityLog;
 use Wsmallnews\Support\Models\SupportModel;
+use Wsmallnews\Support\Support\Utils as SupportUtils;
 
-class Product extends SupportModel implements MediableInterface
+class Product extends SupportModel implements HasMedia, HasSnSubject
 {
-    use HasFactory;
-    use HasTags;
+    use HasActivityLog;
+    use InteractsWithMedia;
+    use Preferenceable;
     use SoftDeletes;
-    use Mediable;
+    use Viewable;
 
     protected $table = 'sn_products';
 
-    protected $guarded = [];
-
     protected $casts = [
+        'counter' => CounterCast::class,
         'sku_type' => Enums\ProductSkuType::class,
-        'original_price' => MoneyCast::class,
-        'price' => MoneyCast::class,
-        'status' => Enums\ProductStatus::class,
-        'images' => 'array',
         'params' => 'array',
+        'price' => MoneyCast::class,
+        'published_at' => 'datetime',
+        'scheduled_at' => 'datetime',
         'options' => 'array',
+        'status' => Enums\ProductStatus::class,
     ];
 
-    public function scopeShow($query)
+    /**
+     * 搜索字段（用于 morphFilter 关键词搜索）。
+     */
+    public static array $keywordSearchFields = ['title', 'subtitle'];
+
+    protected function getActivityTitleAttribute(): string
     {
-        return $query->whereIn('status', ['up', 'hidden']);
+        return 'title';
     }
 
-    public function scopeUp($query)
+    public function getSnSubjectId(): int
     {
-        return $query->where('status', 'up');
+        return $this->id;
     }
 
-    public function scopeDown($query)
+    public function getSnSubjectTitle(): string | HtmlString | null
     {
-        return $query->where('status', 'down');
+        return $this->title;
     }
 
-    public function scopeHidden($query)
+    public function getSnSubjectDescription(): string | HtmlString | null
     {
-        return $query->where('status', 'hidden');
+        return $this->subtitle;
     }
 
-
-    public function mainUrl(): CastAttribute
+    public function getSnSubjectCoverUrl(): string | HtmlString | null
     {
-        return CastAttribute::make(
-            get: function (mixed $value, array $attributes): array {
-                $firstMedia = $this->firstMedia(['main']);
-                $url = [];
-                if ($this->relationLoaded('media')) {
-                    $url['thumbnail'] = $firstMedia?->findVariant('thumbnail')?->getUrl() ?? null;
-                    $url['medium'] = $firstMedia?->findVariant('medium')?->getUrl() ?? null;
-                    $url['large'] = $firstMedia?->findVariant('large')?->getUrl() ?? null;
-                    $url['original'] = $firstMedia?->getUrl() ?? null;
-                }
-
-                return $url;
-            }
-        );
+        return $this->getFirstMediaUrl('product_cover');
     }
 
-
-    public function galleryUrls(): CastAttribute
+    public function getSnSubjectHrefUrl(): string | HtmlString | null
     {
-        return CastAttribute::make(
-            get: function (mixed $value, array $attributes): array {
-                return $this->getMedia(['gallery'])->map(fn($media) => $media->getUrl())->toArray();
-            }
-        );
+        return null;
     }
 
-    
-    public function stockUnit(): BelongsTo
+    /**
+     * post 分类多对多查询
+     */
+    public function scopeCategoryIds($query, array | Collection $categoryIds)
     {
-        return $this->belongsTo(UnitRepository::class, 'stock_unit', 'name');
+        return $query->whereHas('categories', function ($query) use ($categoryIds) {
+            $query->whereIn('id', $categoryIds);
+        });
     }
 
+    // public function scopeShow($query)
+    // {
+    //     return $query->whereIn('status', ['up', 'hidden']);
+    // }
 
-    public function skus(): HasMany
+    // public function scopeUp($query)
+    // {
+    //     return $query->where('status', 'up');
+    // }
+
+    // public function scopeDown($query)
+    // {
+    //     return $query->where('status', 'down');
+    // }
+
+    // public function scopeHidden($query)
+    // {
+    //     return $query->where('status', 'hidden');
+    // }
+
+    public function categories(): BelongsToMany
     {
-        return $this->hasMany(Sku::class, 'product_id', 'id')->where('parent_id', 0)->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+        return $this->belongsToMany(CategoryUtils::getCategoryModel(), 'sn_category_product');
     }
 
-    public function attributes(): HasMany
+    public function content(): MorphOne
     {
-        return $this->hasMany(Attribute::class, 'product_id')->where('attribute_parent_id', 0)->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+        return $this->morphOne(SupportUtils::getContentModel(), 'contentable');
     }
 
-    public function variants(): HasMany
+    public function publisher(): MorphTo
     {
-        return $this->hasMany(Variant::class, 'product_id');
+        return $this->morphTo();
     }
 
+    // public function stockUnit(): BelongsTo
+    // {
+    //     return $this->belongsTo(UnitRepository::class, 'stock_unit', 'name');
+    // }
 
-    public function variant(): HasOne
-    {
-        return $this->variants()->one()->oldestOfMany();
-    }
 
-    public function allSkus(): HasMany
+    // public function skus(): HasMany
+    // {
+    //     return $this->hasMany(Sku::class, 'product_id', 'id')->where('parent_id', 0)->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+    // }
+
+    // public function attributes(): HasMany
+    // {
+    //     return $this->hasMany(Attribute::class, 'product_id')->where('attribute_parent_id', 0)->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+    // }
+
+    // public function variants(): HasMany
+    // {
+    //     return $this->hasMany(Variant::class, 'product_id');
+    // }
+
+
+    // public function variant(): HasOne
+    // {
+    //     return $this->variants()->one()->oldestOfMany();
+    // }
+
+    // public function allSkus(): HasMany
+    // {
+    //     return $this->hasMany(Sku::class, 'product_id', 'id')->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+    // }
+
+    public function team(): BelongsTo
     {
-        return $this->hasMany(Sku::class, 'product_id', 'id')->orderBy('order_column', 'desc')->orderBy('id', 'asc');
+        return $this->belongsTo(SupportUtils::getTenantModel());
     }
 }

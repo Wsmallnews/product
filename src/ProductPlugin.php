@@ -2,62 +2,54 @@
 
 namespace Wsmallnews\Product;
 
-use Filament\Facades\Filament;
+use BadMethodCallException;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
-use Wsmallnews\Product\Resources\ProductResource;
-use Wsmallnews\Product\Resources\AttributeRepositoryResource;
-use Wsmallnews\Product\Resources\UnitRepositoryResource;
-use Wsmallnews\Product\Traits\PluginTrait;
+use Wsmallnews\Product\Support\Utils;
+use Wsmallnews\Support\Filament\Concerns\RegistersConfigurable;
 
+/**
+ * @method static mixed getPanelRegister(?string $type = null)
+ */
 class ProductPlugin implements Plugin
 {
-    use PluginTrait;
-
-    /**
-     * panel 加载插件 Self::make()
-     *
-     * @return static
-     */
-    public static function make(): static
-    {
-        return app(static::class);
-    }
-
-
-    /**
-     * panel 获取当前插件 Self::get()->method()
-     *
-     * @return static
-     */
-    public static function get(): static
-    {
-        return filament(app(static::class)->getId());
-    }
-
+    use RegistersConfigurable;
 
     public function getId(): string
     {
         return 'sn-product';
     }
 
-
     public function register(Panel $panel): void
     {
-        $panel
-            ->resources([
-                ProductResource::class,
-                AttributeRepositoryResource::class,
-                UnitRepositoryResource::class,
-                // PostResource::class,
-                // CategoryResource::class,
-            ])
-            ->pages([
-                // Settings::class,
-            ]);
+        $this->registerConfigurableResources($panel);
+        $this->registerConfigurablePages($panel);
     }
 
     public function boot(Panel $panel): void
     {
+        //
+    }
+
+    public static function make(): static
+    {
+        return app(static::class);
+    }
+
+    public static function get(): static
+    {
+        /** @var static $plugin */
+        $plugin = filament(app(static::class)->getId());
+
+        return $plugin;
+    }
+
+    public function __call(string $method, array $arguments): mixed
+    {
+        if (method_exists(Utils::class, $method)) {
+            return Utils::$method(...$arguments);
+        }
+
+        throw new BadMethodCallException("Method {$method} does not exist on ProductPlugin");
     }
 }

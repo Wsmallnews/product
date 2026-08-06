@@ -2,31 +2,25 @@
 
 namespace Wsmallnews\Product;
 
-use Filament\Facades\Filament;
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
-use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Spatie\LaravelPackageTools\Commands\InstallCommand;
-use Wsmallnews\Product\Commands\ProductCommand;
-use Wsmallnews\Product\Components\ProductList;
-use Wsmallnews\Product\Components\ProductSku;
-use Wsmallnews\Product\Components\ProductDetail;
-use Wsmallnews\Product\Testing\TestsProduct;
-use Wsmallnews\Product\Models\Attribute;
-use Wsmallnews\Product\Models\AttributeRepository;
+use Wsmallnews\Product\Commands\ProductInstallCommand;
+// use Wsmallnews\Product\Components\ProductList;
+// use Wsmallnews\Product\Components\ProductSku;
+// use Wsmallnews\Product\Components\ProductDetail;
+// use Wsmallnews\Product\Models\Attribute;
+// use Wsmallnews\Product\Models\AttributeRepository;
 use Wsmallnews\Product\Models\Product as ProductModel;
-use Wsmallnews\Product\Models\Sku;
-use Wsmallnews\Product\Models\Variant;
-use Wsmallnews\Product\Models\UnitRepository;
+// use Wsmallnews\Product\Models\Sku;
+// use Wsmallnews\Product\Models\Variant;
+// use Wsmallnews\Product\Models\UnitRepository;
 
 class ProductServiceProvider extends PackageServiceProvider
 {
@@ -38,53 +32,29 @@ class ProductServiceProvider extends PackageServiceProvider
     {
         $package->name(static::$name)
             ->hasCommands($this->getCommands())
-            ->hasInstallCommand(function (InstallCommand $command) {
-                $command
-                    ->publishConfigFile()
-                    ->publishMigrations()
-                    ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub('wsmallnews/product');
-            });
-
-        $configFileName = $package->shortName();
-
-        if (file_exists($package->basePath("/../config/{$configFileName}.php"))) {
-            $package->hasConfigFile();
-        }
-
-        if (file_exists($package->basePath('/../database/migrations'))) {
-            $package->hasMigrations($this->getMigrations());
-            $package->runsMigrations();
-        }
-
-        if (file_exists($package->basePath('/../resources/lang'))) {
-            $package->hasTranslations();
-        }
-
-        if (file_exists($package->basePath('/../resources/views'))) {
-            $package->hasViews(static::$viewNamespace);
-        }
+            ->hasConfigFile()
+            ->hasMigrations($this->getMigrations())
+            ->hasTranslations()
+            ->hasViews(static::$viewNamespace);
     }
-
-
 
     public function packageRegistered(): void {}
 
     /**
-     * 引导包完成 (boot 方法的结束)
+     * Boot the package services.
      *
      * @return void
      */
     public function packageBooted()
     {
-        // 注册模型别名
+        // Register model morph map
         Relation::enforceMorphMap([
-            'sn_product_attribute' => Attribute::class,
-            'sn_product_attribute_repository' => AttributeRepository::class,
+            // 'sn_product_attribute' => Attribute::class,
+            // 'sn_product_attribute_repository' => AttributeRepository::class,
             'sn_product' => ProductModel::class,
-            'sn_product_sku' => Sku::class,
-            'sn_product_variant' => Variant::class,
-            'sn_product_unit_repository' => UnitRepository::class,
+            // 'sn_product_sku' => Sku::class,
+            // 'sn_product_variant' => Variant::class,
+            // 'sn_product_unit_repository' => UnitRepository::class,
         ]);
 
         // Asset Registration
@@ -103,23 +73,18 @@ class ProductServiceProvider extends PackageServiceProvider
 
         // Handle Stubs
         if (app()->runningInConsole()) {
-            // foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
-            //     $this->publishes([
-            //         $file->getRealPath() => base_path("stubs/product/{$file->getFilename()}"),
-            //     ], 'product-stubs');
-            // }
+            foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
+                $this->publishes([
+                    $file->getRealPath() => base_path("stubs/comment/{$file->getFilename()}"),
+                ], 'product-stubs');
+            }
         }
 
-        Livewire::component('sn-product-list', ProductList::class);
-
-        Livewire::component('sn-product-sku', ProductSku::class);
-
-        Livewire::component('sn-product-detail', ProductDetail::class);
-
-        // Testing
-        Testable::mixin(new TestsProduct);
+        // Livewire Components
+        // Livewire::component('sn-product-list', ProductList::class);
+        // Livewire::component('sn-product-sku', ProductSku::class);
+        // Livewire::component('sn-product-detail', ProductDetail::class);
     }
-
 
     protected function getAssetPackageName(): ?string
     {
@@ -144,7 +109,7 @@ class ProductServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         return [
-            // ProductCommand::class,
+            ProductInstallCommand::class,
         ];
     }
 
@@ -178,10 +143,10 @@ class ProductServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            '2025_01_20_113316_create_sn_product_attributes_table',
-            '2025_01_20_113316_create_sn_product_skus_table',
-            '2025_01_20_113316_create_sn_product_unit_repositories_table',
-            '2025_01_20_113316_create_sn_products_table'
+            // '2025_01_20_113316_create_sn_product_attributes_table',
+            // '2025_01_20_113316_create_sn_product_skus_table',
+            // '2025_01_20_113316_create_sn_product_unit_repositories_table',
+            'create_sn_products_table',
         ];
     }
 }
