@@ -88,6 +88,18 @@ class Utils
     }
 
     /**
+     * 获取表单布局配置
+     */
+    public static function getFormLayout(?string $name = null): array
+    {
+        if (blank($name)) {
+            return static::getConfig('form_layout', []);
+        }
+
+        return static::getConfig("form_layout.$name", null);
+    }
+
+    /**
      * Get model class by name.
      *
      * @param  string  $name  Model name (e.g., 'product', 'sku')

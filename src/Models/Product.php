@@ -72,7 +72,7 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
 
     public function getSnSubjectCoverUrl(): string | HtmlString | null
     {
-        return $this->getFirstMediaUrl('product_cover');
+        return $this->getFirstMediaUrl('product_image');
     }
 
     public function getSnSubjectHrefUrl(): string | HtmlString | null
