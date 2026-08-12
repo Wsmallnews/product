@@ -15,14 +15,13 @@ Enum ProductStatus :string implements HasLabel, HasIcon, HasColor
     use EnumHelper;
 
     case Up = 'up';
-    
-    case Down = 'down';
-    
-    case Hidden = 'hidden';
-    
-    case Draft = 'draft';
 
-    case Scheduled = 'scheduled';
+    case Down = 'down';
+
+    // 隐藏状态，但是用户找到链接是可以正常购买的
+    case Hidden = 'hidden';
+
+    case Draft = 'draft';
 
     public function getLabel(): ?string
     {
@@ -31,7 +30,6 @@ Enum ProductStatus :string implements HasLabel, HasIcon, HasColor
             self::Down => '下架',
             self::Hidden => '隐藏',
             self::Draft => '草稿',
-            self::Scheduled => '定时发布',
         };
     }
 
@@ -42,7 +40,6 @@ Enum ProductStatus :string implements HasLabel, HasIcon, HasColor
             self::Down => 'danger',
             self::Hidden => 'info',
             self::Draft => 'gray',
-            self::Scheduled => 'warning',
         };
     }
 
@@ -54,7 +51,6 @@ Enum ProductStatus :string implements HasLabel, HasIcon, HasColor
             self::Down => Heroicon::OutlinedArrowDown,
             self::Hidden => Heroicon::OutlinedEyeSlash,
             self::Draft => Heroicon::OutlinedClipboardDocumentList,
-            self::Scheduled => Heroicon::OutlinedClock,
         };
     }
 }

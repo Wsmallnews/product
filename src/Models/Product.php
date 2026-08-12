@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -40,7 +41,6 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
         'params' => 'array',
         'price' => MoneyCast::class,
         'published_at' => 'datetime',
-        'scheduled_at' => 'datetime',
         'options' => 'array',
         'status' => Enums\ProductStatus::class,
     ];
@@ -123,6 +123,14 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
     public function publisher(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * 定时调度任务关联
+     */
+    public function scheduledTasks(): MorphMany
+    {
+        return $this->morphMany(SupportUtils::getScheduledTaskModel(), 'schedulable');
     }
 
     // public function stockUnit(): BelongsTo

@@ -5,6 +5,7 @@ namespace Wsmallnews\Product\Filament\Resources\Products\Pages;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Wsmallnews\Product\Filament\Resources\Products\ProductResource;
+use Wsmallnews\Support\Filament\Resources\ScheduledTasks\Widgets\ScheduledTasks as ScheduledTasksWidget;
 use Wsmallnews\Support\Filament\Resources\Concerns\Pages\Scopeable;
 
 class ViewProduct extends ViewRecord
@@ -17,6 +18,13 @@ class ViewProduct extends ViewRecord
     {
         return [
             EditAction::make(),
+        ];
+    }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            ScheduledTasksWidget::make(),
         ];
     }
 }

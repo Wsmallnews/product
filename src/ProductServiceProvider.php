@@ -2,6 +2,7 @@
 
 namespace Wsmallnews\Product;
 
+use Filament\Forms\Components\TextInput;
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
@@ -17,10 +18,12 @@ use Wsmallnews\Product\Commands\ProductInstallCommand;
 // use Wsmallnews\Product\Components\ProductDetail;
 // use Wsmallnews\Product\Models\Attribute;
 // use Wsmallnews\Product\Models\AttributeRepository;
+use Wsmallnews\Product\Enums\ProductStatus;
 use Wsmallnews\Product\Models\Product as ProductModel;
 // use Wsmallnews\Product\Models\Sku;
 // use Wsmallnews\Product\Models\Variant;
 // use Wsmallnews\Product\Models\UnitRepository;
+use Wsmallnews\Support\Facades\ScheduledTask;
 
 class ProductServiceProvider extends PackageServiceProvider
 {
@@ -84,6 +87,45 @@ class ProductServiceProvider extends PackageServiceProvider
         // Livewire::component('sn-product-list', ProductList::class);
         // Livewire::component('sn-product-sku', ProductSku::class);
         // Livewire::component('sn-product-detail', ProductDetail::class);
+
+        // 注册 Product 的定时调度动作（publish / unpublish / price_change）
+        ScheduledTask::registers('sn_product', [
+            [
+                'action' => 'publish',
+                'label' => '定时上架',
+                'forms' => fn () => [],
+                'handler' => fn ($task, ?array $payload): bool => $task->schedulable->update([
+                    'status' => ProductStatus::Up,
+                    'published_at' => $task->schedulable->published_at ?? now(),
+                ]),
+            ],
+            [
+                'action' => 'unpublish',
+                'label' => '定时下架',
+                'forms' => fn () => [],
+                'handler' => fn ($task, ?array $payload): bool => $task->schedulable->update([
+                    'status' => ProductStatus::Down,
+                ]),
+            ],
+            [
+                'action' => 'price_change',
+                'label' => '定时改价',
+                // 注册时声明自定义字段（价格 / 原价）
+                'forms' => fn () => [
+                    TextInput::make('price')->label('促销价')->numeric()->required(),
+                    TextInput::make('original_price')->label('原价')->numeric(),
+                ],
+                // handler 本次预留，多规格逻辑待 SKU/Variant 完善后实现
+                'handler' => function ($task, ?array $payload): bool {
+                    $updates = array_filter([
+                        'price' => $payload['price'] ?? null,
+                        'original_price' => $payload['original_price'] ?? null,
+                    ], fn ($v) => $v !== null);
+
+                    return $task->schedulable->update($updates);
+                },
+            ],
+        ]);
     }
 
     protected function getAssetPackageName(): ?string

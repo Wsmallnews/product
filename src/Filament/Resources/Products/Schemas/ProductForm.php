@@ -20,6 +20,7 @@ use Wsmallnews\Product\Enums\ProductStatus;
 use Wsmallnews\Product\Product;
 use Wsmallnews\Product\Support\Utils;
 use Wsmallnews\Support\Filament\Forms\FormComponents;
+use Wsmallnews\Support\Facades\ScheduledTask;
 
 class ProductForm
 {
@@ -178,6 +179,7 @@ class ProductForm
             static::titleField()->columnSpan(2),
             static::subtitleField()->columnSpan(2),
             static::statusField()->columnSpan(2),
+            ScheduledTask::scheduleRepeater('sn_product')->columnSpan(2),
             static::orderField()->columnSpan(2),
         ];
     }
