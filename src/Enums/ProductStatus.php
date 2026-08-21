@@ -10,7 +10,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Wsmallnews\Support\Enums\Traits\EnumHelper;
 
-Enum ProductStatus :string implements HasLabel, HasIcon, HasColor
+enum ProductStatus: string implements HasColor, HasIcon, HasLabel
 {
     use EnumHelper;
 
@@ -42,7 +42,6 @@ Enum ProductStatus :string implements HasLabel, HasIcon, HasColor
             self::Draft => 'gray',
         };
     }
-
 
     public function getIcon(): string | BackedEnum | Htmlable | null
     {

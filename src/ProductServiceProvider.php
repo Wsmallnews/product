@@ -9,20 +9,13 @@ use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Filesystem\Filesystem;
-use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Wsmallnews\Product\Commands\ProductInstallCommand;
-// use Wsmallnews\Product\Components\ProductList;
-// use Wsmallnews\Product\Components\ProductSku;
-// use Wsmallnews\Product\Components\ProductDetail;
-// use Wsmallnews\Product\Models\Attribute;
-// use Wsmallnews\Product\Models\AttributeRepository;
 use Wsmallnews\Product\Enums\ProductStatus;
 use Wsmallnews\Product\Models\Product as ProductModel;
-// use Wsmallnews\Product\Models\Sku;
-// use Wsmallnews\Product\Models\Variant;
-// use Wsmallnews\Product\Models\UnitRepository;
+use Wsmallnews\Product\Models\Spec as SpecModel;
+use Wsmallnews\Product\Models\Variant as VariantModel;
 use Wsmallnews\Support\Facades\ScheduledTask;
 
 class ProductServiceProvider extends PackageServiceProvider
@@ -52,12 +45,9 @@ class ProductServiceProvider extends PackageServiceProvider
     {
         // Register model morph map
         Relation::enforceMorphMap([
-            // 'sn_product_attribute' => Attribute::class,
-            // 'sn_product_attribute_repository' => AttributeRepository::class,
             'sn_product' => ProductModel::class,
-            // 'sn_product_sku' => Sku::class,
-            // 'sn_product_variant' => Variant::class,
-            // 'sn_product_unit_repository' => UnitRepository::class,
+            'sn_product_spec' => SpecModel::class,
+            'sn_product_variant' => VariantModel::class,
         ]);
 
         // Asset Registration
@@ -82,11 +72,6 @@ class ProductServiceProvider extends PackageServiceProvider
                 ], 'product-stubs');
             }
         }
-
-        // Livewire Components
-        // Livewire::component('sn-product-list', ProductList::class);
-        // Livewire::component('sn-product-sku', ProductSku::class);
-        // Livewire::component('sn-product-detail', ProductDetail::class);
 
         // 注册 Product 的定时调度动作（publish / unpublish / price_change）
         ScheduledTask::registers('sn_product', [
@@ -186,9 +171,10 @@ class ProductServiceProvider extends PackageServiceProvider
     {
         return [
             // '2025_01_20_113316_create_sn_product_attributes_table',
-            // '2025_01_20_113316_create_sn_product_skus_table',
             // '2025_01_20_113316_create_sn_product_unit_repositories_table',
             'create_sn_products_table',
+            'create_sn_product_specs_table',
+            'create_sn_product_variants_table',
         ];
     }
 }

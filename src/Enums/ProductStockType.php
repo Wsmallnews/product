@@ -2,14 +2,13 @@
 
 namespace Wsmallnews\Product\Enums;
 
-use Filament\Support\Contracts\HasLabel;
-use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasIcon;
+use Filament\Support\Contracts\HasLabel;
 use Wsmallnews\Support\Enums\Traits\EnumHelper;
 
-Enum ProductStockType :string implements HasLabel, HasIcon, HasColor
+enum ProductStockType: string implements HasColor, HasIcon, HasLabel
 {
-
     use EnumHelper;
 
     case Stock = 'stock';
@@ -24,7 +23,6 @@ Enum ProductStockType :string implements HasLabel, HasIcon, HasColor
         };
     }
 
-
     public function getColor(): string | array | null
     {
         return match ($this) {
@@ -32,7 +30,6 @@ Enum ProductStockType :string implements HasLabel, HasIcon, HasColor
             self::Infinite => 'warning',
         };
     }
-
 
     public function getIcon(): ?string
     {

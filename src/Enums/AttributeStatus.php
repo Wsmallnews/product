@@ -7,15 +7,13 @@ use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 use Wsmallnews\Support\Enums\Traits\EnumHelper;
 
-Enum AttributeStatus :string implements HasLabel, HasIcon, HasColor
+enum AttributeStatus: string implements HasColor, HasIcon, HasLabel
 {
-
     use EnumHelper;
 
     case Up = 'up';
 
     case Down = 'down';
-
 
     public function getLabel(): ?string
     {
@@ -25,7 +23,6 @@ Enum AttributeStatus :string implements HasLabel, HasIcon, HasColor
         };
     }
 
-
     public function getColor(): string | array | null
     {
         return match ($this) {
@@ -33,7 +30,6 @@ Enum AttributeStatus :string implements HasLabel, HasIcon, HasColor
             self::Down => 'warning',
         };
     }
-
 
     public function getIcon(): ?string
     {

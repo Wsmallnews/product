@@ -5,8 +5,8 @@ namespace Wsmallnews\Product\Filament\Resources\Products\Pages;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Wsmallnews\Product\Filament\Resources\Products\ProductResource;
-use Wsmallnews\Support\Filament\Resources\ScheduledTasks\Widgets\ScheduledTasks as ScheduledTasksWidget;
 use Wsmallnews\Support\Filament\Resources\Concerns\Pages\Scopeable;
+use Wsmallnews\Support\Filament\Resources\ScheduledTasks\Widgets\ScheduledTasks as ScheduledTasksWidget;
 
 class ViewProduct extends ViewRecord
 {

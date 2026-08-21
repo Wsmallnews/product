@@ -3,24 +3,21 @@
 namespace Wsmallnews\Product\Filament\Resources\Products\Schemas;
 
 use Filament\Forms;
-use Filament\Schemas;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Component;
 use Wsmallnews\Product\Enums\FormLayout;
-use Wsmallnews\Product\Enums\ProductSkuType;
 use Wsmallnews\Product\Enums\ProductStatus;
-use Wsmallnews\Product\Product;
+use Wsmallnews\Product\Enums\ProductStockType;
 use Wsmallnews\Product\Support\Utils;
-use Wsmallnews\Support\Filament\Forms\FormComponents;
 use Wsmallnews\Support\Facades\ScheduledTask;
+use Wsmallnews\Support\Filament\Forms\FormComponents;
 
 class ProductForm
 {
@@ -62,7 +59,7 @@ class ProductForm
                     ->icon(Heroicon::OutlinedTag)
                     ->schema([
                         Section::make('库存信息')->schema(static::stockInfoFields())->columns(2),
-                        Section::make('规格信息')->schema(static::skuInfoFields())->columns(2),
+                        Section::make('规格信息')->schema(static::specInfoFields()),
                     ]),
                 Tab::make('产品详情')
                     ->icon(Heroicon::OutlinedClipboardDocumentList)
@@ -107,7 +104,7 @@ class ProductForm
                         Section::make('基础信息')->schema(static::baseInfoFields())->columns(2),
                         Section::make('图片信息')->schema(static::imageInfoFields())->columns(2),
                         Section::make('库存信息')->schema(static::stockInfoFields())->columns(2),
-                        Section::make('规格信息')->schema(static::skuInfoFields())->columns(2),
+                        Section::make('规格信息')->schema(static::specInfoFields()),
                         Section::make('参数信息')->schema(static::paramsInfoFields()),
                         Section::make('产品详情')->schema(static::detailInfoFields()),
                     ])
@@ -139,7 +136,7 @@ class ProductForm
                 ->completedIcon(Heroicon::HandThumbUp)
                 ->schema([
                     Section::make('库存信息')->schema(static::stockInfoFields())->columns(2),
-                    Section::make('规格信息')->schema(static::skuInfoFields())->columns(2),
+                    Section::make('规格信息')->schema(static::specInfoFields()),
                 ]),
             Wizard\Step::make('产品详情')
                 ->icon(Heroicon::OutlinedClipboardDocumentList)
@@ -162,7 +159,7 @@ class ProductForm
             Section::make('基础信息')->schema(static::baseInfoFields())->columns(2),
             Section::make('图片信息')->schema(static::imageInfoFields())->columns(2),
             Section::make('库存信息')->schema(static::stockInfoFields())->columns(2),
-            Section::make('规格信息')->schema(static::skuInfoFields())->columns(2),
+            Section::make('规格信息')->schema(static::specInfoFields()),
             Section::make('参数信息')->schema(static::paramsInfoFields()),
             Section::make('产品详情')->schema(static::detailInfoFields()),
         ];
@@ -203,22 +200,28 @@ class ProductForm
         return [
             static::stockTypeField(),
             static::stockUnitField(),
-            static::showSalesField(),
         ];
     }
 
     /**
-     * 规格信息字段
+     * 规格信息字段（四种规格类型复用 ProductSpecForm 共享编辑器）
      */
-    public static function skuInfoFields(): array
+    public static function specInfoFields(): array
     {
         return [
-            static::skuTypeField()->columnSpanFull(),
-            static::skuSimpleField()
-                ->visible(fn (Get $get): bool => $get('sku_type') == ProductSkuType::Single->value),
-            // static::skuMultipleField()
-            //     ->visible(fn (Get $get): bool => $get('sku_type') == ProductSkuType::Multiple->value)
-            //     ->columnSpanFull(),
+            ProductSpecForm::specTypeField(),
+
+            // 单规格：变体属性平铺为一级字段
+            ProductSpecForm::singleSpecFieldset(),
+
+            // 多规格 / 主多规格 / 多单位：规格项编辑器（主多规格拆为主规格 + 附加规格项）+ 规格组合
+            Group::make()
+                ->schema([
+                    ...ProductSpecForm::specsRepeaters(),
+                    ProductSpecForm::variantsRepeater(),
+                ])
+                ->visible(fn (Component $livewire): bool => ProductSpecForm::hasSpecs($livewire))
+                ->columnSpanFull(),
         ];
     }
 
@@ -238,7 +241,12 @@ class ProductForm
     public static function detailInfoFields(): array
     {
         return [
-            static::richContentField()->columnSpanFull(),
+            FormComponents::contentTypeGroup(
+                types: Utils::getConfig('contents.product.types'),
+                defaultType: Utils::getConfig('contents.product.default_type'),
+                directory: Utils::getFileDirectory('contents'),
+                label: '商品详情'
+            )->columnSpanFull(),
         ];
     }
 
@@ -294,7 +302,7 @@ class ProductForm
     public static function imageField(): Forms\Components\FileUpload
     {
         return FormComponents::mediaImageUpload('product_image', 'product_image')
-            ->label('产品主图')->required()
+            ->label('产品主图')
             ->required()
             ->customProperties(function (Component $livewire) {
                 return [
@@ -330,94 +338,22 @@ class ProductForm
     {
         return Forms\Components\Select::make('stock_type')
             ->label('库存类型')
-            ->options([
-                'none' => '无库存',
-                'stock' => '有库存',
-            ])
-            ->default('none')
+            ->options(ProductStockType::class)
+            ->default(ProductStockType::Infinite)
+            ->live()
             ->required();
     }
 
     /**
-     * 库存单位
+     * 库存单位（多单位模式下为基准单位，变体按换算比例折算）
      */
     public static function stockUnitField(): Forms\Components\TextInput
     {
         return Forms\Components\TextInput::make('stock_unit')
             ->label('库存单位')
-            ->placeholder('件/个/箱');
+            ->placeholder('件/个/箱')
+            ->live(onBlur: true);
     }
-
-    /**
-     * 显示销量
-     */
-    public static function showSalesField(): Forms\Components\TextInput
-    {
-        return Forms\Components\TextInput::make('show_sales')
-            ->label('显示销量')
-            ->integer()
-            ->default(0)
-            ->placeholder('0');
-    }
-
-    /**
-     * 规格类型
-     */
-    public static function skuTypeField(): Forms\Components\ToggleButtons
-    {
-        return Forms\Components\ToggleButtons::make('sku_type')
-            ->default(ProductSkuType::Single)
-            ->inline()
-            ->options(ProductSkuType::class);
-    }
-
-    /**
-     * 单规格
-     */
-    public static function skuSimpleField(): Forms\Components\KeyValue
-    {
-        return Forms\Components\KeyValue::make('sku_simple')
-            ->label('规格信息')
-            ->keyLabel('属性名')
-            ->keyPlaceholder('如：颜色')
-            ->valueLabel('属性值')
-            ->valuePlaceholder('如：红色')
-            ->addActionLabel('添加属性')
-            ->reorderable();
-    }
-
-    /**
-     * 多规格
-     */
-    // public static function skuMultipleField(): Schemas\Components\Arrange
-    // {
-    //     return \Wsmallnews\Support\Filament\Forms\Fields\Arrange::make('sku_multiple')
-    //         ->label('规格信息')
-    //         ->schema([
-    //             Forms\Components\TextInput::make('name')
-    //                 ->label('规格名')
-    //                 ->placeholder('如：颜色')
-    //                 ->required(),
-    //             Forms\Components\Repeater::make('values')
-    //                 ->label('规格值')
-    //                 ->schema([
-    //                     Forms\Components\TextInput::make('name')
-    //                         ->label('值名称')
-    //                         ->placeholder('如：红色')
-    //                         ->required(),
-    //                 ])
-    //                 ->arrangePlaceholder('请填写规格名')
-    //                 ->arrangeChildPlaceholder('请填写子规格名')
-    //                 ->addActionLabel('添加规格值')
-    //                 ->reorderable(),
-    //         ])
-    //         ->arrangePlaceholder('请填写规格名')
-    //         ->arrangeChildPlaceholder('请填写子规格名')
-    //         ->addActionLabel('添加规格')
-    //         ->addChildActionLabel('添加子规格')
-    //         ->required()
-    //         ->columnSpanFull();
-    // }
 
     /**
      * 商品参数
@@ -433,100 +369,5 @@ class ProductForm
             ->addActionLabel('添加参数')
             ->required()
             ->reorderable();
-    }
-
-    /**
-     * 商品详情（富文本）
-     */
-    public static function richContentField(): Forms\Components\RichEditor
-    {
-        return FormComponents::richEditor('content')
-            ->label('商品详情')
-            // ->fileAttachmentsDirectory(Product::getImageDirectory())
-            ;
-    }
-
-    // /**
-    //  * 商品详情（Markdown）
-    //  */
-    // public static function markdownContentField(): Forms\Components\MarkdownEditor
-    // {
-    //     return FormComponents::markdownEditor('content')
-    //         ->label('商品详情')
-    //         ->fileAttachmentsDirectory(Product::getImageDirectory());
-    // }
-
-    // ========================= 价格字段 =========================
-
-    /**
-     * 原价
-     */
-    public static function originalPriceField(): Forms\Components\TextInput
-    {
-        return Forms\Components\TextInput::make('original_price')
-            ->label('原价')
-            ->formatStateUsing(sn_currency()->filamentFormState)
-            ->suffix(sn_currency()->filamentFormSymbol)
-            ->numeric()
-            ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
-            ->required();
-    }
-
-    /**
-     * 成本价
-     */
-    public static function costPriceField(): Forms\Components\TextInput
-    {
-        return Forms\Components\TextInput::make('cost_price')
-            ->label('成本价')
-            ->formatStateUsing(sn_currency()->filamentFormState)
-            ->suffix(sn_currency()->filamentFormSymbol)
-            ->helperText('用户无法看到成本价')
-            ->numeric()
-            ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
-            ->required();
-    }
-
-    /**
-     * 售卖价
-     */
-    public static function priceField(): Forms\Components\TextInput
-    {
-        return Forms\Components\TextInput::make('price')
-            ->label('售卖价')
-            ->formatStateUsing(sn_currency()->filamentFormState)
-            ->suffix(sn_currency()->filamentFormSymbol)
-            ->numeric()
-            ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
-            ->required();
-    }
-
-    /**
-     * 库存
-     */
-    public static function stockField(): Forms\Components\TextInput
-    {
-        return Forms\Components\TextInput::make('stock')
-            ->label('库存')
-            ->integer()
-            ->suffix(fn (Get $get): ?string => $get('../stock_unit'));
-    }
-
-    /**
-     * 重量
-     */
-    public static function weightField(): Forms\Components\TextInput
-    {
-        return Forms\Components\TextInput::make('weight')
-            ->label('重量');
-    }
-
-    /**
-     * 货号
-     */
-    public static function productSnField(): Forms\Components\TextInput
-    {
-        return Forms\Components\TextInput::make('product_sn')
-            ->label('货号');
     }
 }

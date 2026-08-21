@@ -3,6 +3,7 @@
 use Wsmallnews\Product\Enums\FormLayout;
 use Wsmallnews\Product\Filament\Resources\Products\ProductResource;
 use Wsmallnews\Product\Models;
+use Wsmallnews\Support\Enums\ContentType;
 
 return [
     /**
@@ -51,7 +52,7 @@ return [
      */
     'models' => [
         'product' => Models\Product::class,
-        'sku' => Models\Sku::class,
+        'spec' => Models\Spec::class,
         'variant' => Models\Variant::class,
         'attribute' => Models\Attribute::class,
         'attribute_repository' => Models\AttributeRepository::class,
@@ -83,4 +84,15 @@ return [
      * File base directory (only used by filament default upload component (Forms\Components\FileUpload))
      */
     'file_directory' => 'sn/product/',
+
+    /**
+     * 内容表单配置（FormComponents::contentTypeGroup）
+     * types: 允许的内容类型；default_type: 默认内容类型
+     */
+    'contents' => [
+        'product' => [
+            'types' => null,
+            'default_type' => ContentType::Richtext,
+        ],
+    ],
 ];

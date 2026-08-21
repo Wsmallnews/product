@@ -1,1 +1,21 @@
-@import '../../../../vendor/filament/filament/resources/css/theme.css';
+@source "../views/**/*";
+
+/* 规格图片上传：紧凑正方形（4.5rem），避免 FilePond 默认 dropzone 撑高 table 行 */
+.sn-spec-upload .filepond--root {
+    height: 2.5rem;
+    width: 2.5rem;
+}
+
+/* 空状态提示压缩到方块内（Filament 默认 p-3 带 !important，覆盖也需 !important） */
+.sn-spec-upload .filepond--drop-label {
+    padding: 0.125rem !important;
+    font-size: 0.65rem;
+    line-height: 1.2;
+}
+
+/* 已上传预览：正方形，避免在 repeater table 中被挤压变形 */
+.sn-spec-upload img {
+    width: 2.5rem;
+    height: 2.5rem;
+    object-fit: cover;
+}

@@ -11,17 +11,17 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
-use Filament\Support\Enums\Width;
 use Filament\Forms;
 use Filament\Schemas;
+use Filament\Support\Enums\Width;
 use Filament\Tables;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Wsmallnews\Product\Enums\ProductSpecType;
 use Wsmallnews\Product\Enums\ProductStatus;
-use Wsmallnews\Product\Enums\ProductSkuType;
 use Wsmallnews\Support\Filament\Actions\ActionComponents;
 use Wsmallnews\Support\Filament\Filters\FilterComponents;
 use Wsmallnews\Support\Filament\Resources\ScheduledTasks\Concerns\ViewScheduledTasksAction;
@@ -49,7 +49,7 @@ class ProductTable
             ->filtersFormWidth(Width::Medium)
             ->filters([
                 static::statusFilter(),
-                // static::skuTypeFilter(),
+                static::specTypeFilter(),
                 static::priceRangeFilter(),
                 ...FilterComponents::createUpdateRangeFilter(),
                 TrashedFilter::make(),
@@ -78,7 +78,7 @@ class ProductTable
                             //     $record->categories()->delete();
                             // });
                         }),
-                    RestoreBulkAction::make()
+                    RestoreBulkAction::make(),
                 ]),
             ])
             ->emptyStateActions([
@@ -172,11 +172,11 @@ class ProductTable
             ->multiple();
     }
 
-    protected static function skuTypeFilter(): Tables\Filters\SelectFilter
+    protected static function specTypeFilter(): Tables\Filters\SelectFilter
     {
-        return Tables\Filters\SelectFilter::make('sku_type')
+        return Tables\Filters\SelectFilter::make('spec_type')
             ->label('规格类型')
-            ->options(ProductSkuType::class);
+            ->options(ProductSpecType::class);
     }
 
     protected static function priceRangeFilter(): Tables\Filters\Filter

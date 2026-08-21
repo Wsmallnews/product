@@ -2,22 +2,23 @@
 
 namespace Wsmallnews\Product\Enums;
 
+use BackedEnum;
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use Wsmallnews\Support\Enums\Traits\EnumHelper;
 
-Enum VariantStatus :string implements HasLabel, HasIcon, HasColor
+enum VariantStatus: string implements HasColor, HasIcon, HasLabel
 {
-
     use EnumHelper;
 
     case Up = 'up';
 
     case Down = 'down';
 
-
-    public function getLabel(): ?string
+    public function getLabel(): string | Htmlable | null
     {
         return match ($this) {
             self::Up => '上架中',
@@ -33,12 +34,11 @@ Enum VariantStatus :string implements HasLabel, HasIcon, HasColor
         };
     }
 
-
-    public function getIcon(): ?string
+    public function getIcon(): string | BackedEnum | Htmlable | null
     {
         return match ($this) {
-            self::Up => 'heroicon-m-arrow-long-up',
-            self::Down => 'heroicon-m-arrow-long-down',
+            self::Up => Heroicon::OutlinedArrowUp,
+            self::Down => Heroicon::OutlinedArrowDown,
         };
     }
 }

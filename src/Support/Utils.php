@@ -129,24 +129,24 @@ class Utils
     }
 
     /**
-     * Get Sku model class.
+     * Get Spec model class.
      *
-     * @return string Models\Sku
+     * @return string Models\Spec
      */
-    // public static function getSkuModel(): string
-    // {
-    //     return self::getModel('sku');
-    // }
+    public static function getSpecModel(): string
+    {
+        return self::getModel('spec');
+    }
 
-    // /**
-    //  * Get Variant model class.
-    //  *
-    //  * @return string Models\Variant
-    //  */
-    // public static function getVariantModel(): string
-    // {
-    //     return self::getModel('variant');
-    // }
+    /**
+     * Get Variant model class.
+     *
+     * @return string Models\Variant
+     */
+    public static function getVariantModel(): string
+    {
+        return self::getModel('variant');
+    }
 
     /**
      * Get file directory path with optional type and date.

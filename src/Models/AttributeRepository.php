@@ -8,7 +8,6 @@ use Wsmallnews\Support\Models\SupportModel;
 
 class AttributeRepository extends SupportModel
 {
-
     protected $table = 'sn_product_attribute_repositories';
 
     protected $casts = [
@@ -16,7 +15,6 @@ class AttributeRepository extends SupportModel
         'options' => 'array',
         'status' => AttributeStatus::class,
     ];
-
 
     public function children()
     {
