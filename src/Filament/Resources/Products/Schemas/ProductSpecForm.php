@@ -720,7 +720,7 @@ class ProductSpecForm
      */
     protected static function imageUploadField(): FileUpload
     {
-        return FormComponents::localImageUpload('image')
+        return FormComponents::plainImageUpload('image')
             ->label('图片')
             ->imagePreviewHeight('4.5rem')
             ->extraAttributes(['class' => 'sn-spec-upload'])
