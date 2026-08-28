@@ -6,6 +6,7 @@ use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\TextInput;
@@ -14,6 +15,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Wsmallnews\Product\Enums\ProductSpecType;
@@ -55,8 +57,12 @@ class ProductSpecForm
             ->label('规格类型')
             ->default(ProductSpecType::Single->value)
             ->inline()
+            ->grouped()
             ->options(ProductSpecType::class)
             ->live()
+            // 编辑/查看页（record 已存在）禁止切换规格类型；
+            // disabled 字段不参与脱水，保存时以数据库中的 spec_type 为准
+            ->disabled(fn (?Model $record): bool => $record !== null)
             ->afterStateUpdated(function (Component $livewire, Set $set): void {
                 if (static::isSpecUnit($livewire)) {
                     // 多单位：规格名固定为「单位」，切换时归一化已有项（保留 key 与 children）
@@ -123,6 +129,8 @@ class ProductSpecForm
             ->label(fn (Component $livewire): string => static::isSpecMainMultiple($livewire) ? '主规格项' : '规格项')
             ->default([])
             ->schema([
+                // 数据库记录 id：保存 diff 的匹配键（新项无 id → 新增记录）
+                Hidden::make('id'),
                 TextInput::make('name')
                     ->label('规格名')
                     ->placeholder('如：颜色、尺码')
@@ -161,6 +169,7 @@ class ProductSpecForm
             ->label('附加规格项')
             ->default([])
             ->schema([
+                Hidden::make('id'),
                 TextInput::make('name')
                     ->label('规格名')
                     ->placeholder('如：颜色、尺码')
@@ -193,11 +202,15 @@ class ProductSpecForm
             ->label('规格值')
             ->hiddenLabel()
             ->default([])
-            ->schema(fn (Component $livewire): array => static::columnsToFields(
-                $columns(),
-                $livewire,
-                'sn-product.hidden_spec_value_columns',
-            ))
+            ->schema(fn (Component $livewire): array => [
+                // 数据库记录 id：保存 diff 的匹配键（新项无 id → 新增记录）
+                Hidden::make('id'),
+                ...static::columnsToFields(
+                    $columns(),
+                    $livewire,
+                    'sn-product.hidden_spec_value_columns',
+                ),
+            ])
             ->table(fn (Component $livewire): array => static::columnsToTable(
                 $columns(),
                 $livewire,
@@ -223,12 +236,16 @@ class ProductSpecForm
         return Repeater::make('variants')
             ->label('规格组合')
             ->default([])
-            ->schema(fn (Component $livewire): array => static::columnsToFields(
-                static::variantColumns(),
-                $livewire,
-                'sn-product.hidden_variant_columns',
-                ['readOnly' => static::isSpecMainMultiple($livewire)],
-            ))
+            ->schema(fn (Component $livewire): array => [
+                // 数据库记录 id（回填携带，供识别记录身份）
+                Hidden::make('id'),
+                ...static::columnsToFields(
+                    static::variantColumns(),
+                    $livewire,
+                    'sn-product.hidden_variant_columns',
+                    ['readOnly' => static::isSpecMainMultiple($livewire)],
+                ),
+            ])
             ->table(fn (Component $livewire): array => static::columnsToTable(
                 static::variantColumns(),
                 $livewire,
@@ -497,8 +514,9 @@ class ProductSpecForm
     /**
      * 规格项变更后，重建规格组合列表（笛卡尔积），保留用户已填的值。
      *
-     * 组合指纹使用「排序后的子规格名称」，不依赖 repeater item key
-     * （repeater 在 hydrate/dehydrate 时会重写 key）。
+     * 组合指纹优先使用「子规格 id 序列」（编辑态，id 不随改名 / 重排变化，
+     * 老组合的值与记录 id 原样保留），创建态（无 id）退化为名称序列；
+     * 指纹不依赖 repeater item key（repeater 在 hydrate/dehydrate 时会重写 key）。
      * 主多规格时，组合的变体属性取自主规格（第一组）规格值上的设置。
      *
      * @param  array<string, mixed>  $specsState  规格项 state（specs + extra_specs 已合并，主规格在前）
@@ -532,7 +550,8 @@ class ProductSpecForm
             foreach ($combos as $combo) {
                 foreach ($children as $child) {
                     $next[] = [...$combo, [
-                        'name' => $child['name'],
+                        'id' => filled($child['id'] ?? null) ? (int) $child['id'] : null,
+                        'name' => (string) $child['name'],
                         'source' => ($isMainMultiple && $groupIndex === 0) ? $child : null,
                     ]];
                 }
@@ -541,14 +560,18 @@ class ProductSpecForm
             $combos = $next;
         }
 
-        // 以排序后的规格值名称组合作为指纹，保留已填的值
-        $existing = collect($currentVariants)->keyBy(fn (array $item): string => static::variantFingerprint((array) ($item['spec_names'] ?? [])));
+        // 以 id 优先的组合指纹索引当前组合，保留已填的值与记录 id
+        $existing = collect($currentVariants)->keyBy(fn (array $item): string => static::variantKey(
+            (array) ($item['spec_ids'] ?? []),
+            (array) ($item['spec_names'] ?? []),
+        ));
 
         $variants = [];
 
         foreach ($combos as $combo) {
-            $names = array_map(fn (array $item): string => (string) $item['name'], $combo);
-            $fingerprint = static::variantFingerprint($names);
+            $ids = array_map(fn (array $item): ?int => $item['id'], $combo);
+            $names = array_map(fn (array $item): string => $item['name'], $combo);
+            $key = static::variantKey($ids, $names);
 
             // 主多规格：属性来源 = 主规格值；其他类型：保留旧值
             $source = null;
@@ -560,10 +583,12 @@ class ProductSpecForm
                 }
             }
 
-            $old = $isMainMultiple ? [] : (array) $existing->get($fingerprint, []);
+            $old = $isMainMultiple ? [] : (array) $existing->get($key, []);
             $from = $isMainMultiple ? (array) $source : $old;
 
             $variants[(string) Str::uuid()] = [
+                'id' => $old['id'] ?? null,
+                'spec_ids' => $ids,
                 'spec_names' => $names,
                 'product_spec_text' => implode(',', $names),
                 'image' => $from['image'] ?? null,
@@ -579,7 +604,27 @@ class ProductSpecForm
     }
 
     /**
-     * 组合指纹：排序后的子规格名称。
+     * 组合指纹：排序后的子规格 id（优先）或名称兜底。
+     *
+     * @param  array<int, int|null>  $ids
+     * @param  array<int, string>  $names
+     */
+    public static function variantKey(array $ids, array $names): string
+    {
+        $parts = [];
+
+        foreach ($names as $index => $name) {
+            $id = $ids[$index] ?? null;
+            $parts[] = filled($id) ? "i:{$id}" : 'n:' . trim((string) $name);
+        }
+
+        sort($parts);
+
+        return implode('|', $parts);
+    }
+
+    /**
+     * 组合指纹（名称版，创建态兜底）。
      *
      * @param  array<int, string>  $names
      */

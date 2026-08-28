@@ -142,7 +142,7 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
 
     public function variants(): HasMany
     {
-        return $this->hasMany(Variant::class, 'product_id', 'id')->orderBy('id');
+        return $this->hasMany(Variant::class, 'product_id', 'id')->orderBy('order_column')->orderBy('id');
     }
 
     /**

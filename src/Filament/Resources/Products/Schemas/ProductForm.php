@@ -53,7 +53,7 @@ class ProductForm
                     ->icon(Heroicon::OutlinedDocumentText)
                     ->schema([
                         Section::make()->schema(static::baseInfoFields())->columns(2),
-                        Section::make('图片信息')->schema(static::imageInfoFields())->columns(2),
+                        Section::make('定时任务')->schema([ScheduledTask::scheduleRepeater('sn_product')])->columns(1),
                     ]),
                 Tab::make('规格库存')
                     ->icon(Heroicon::OutlinedTag)
@@ -102,7 +102,7 @@ class ProductForm
                 Group::make()
                     ->schema([
                         Section::make('基础信息')->schema(static::baseInfoFields())->columns(2),
-                        Section::make('图片信息')->schema(static::imageInfoFields())->columns(2),
+                        Section::make('定时任务')->schema([ScheduledTask::scheduleRepeater('sn_product')])->columns(1),
                         Section::make('库存信息')->schema(static::stockInfoFields())->columns(2),
                         Section::make('规格信息')->schema(static::specInfoFields()),
                         Section::make('参数信息')->schema(static::paramsInfoFields()),
@@ -129,7 +129,7 @@ class ProductForm
                 ->completedIcon(Heroicon::HandThumbUp)
                 ->schema([
                     Section::make('基础信息')->schema(static::baseInfoFields())->columns(2),
-                    Section::make('图片信息')->schema(static::imageInfoFields())->columns(2),
+                    Section::make('定时任务')->schema([ScheduledTask::scheduleRepeater('sn_product')])->columns(1),
                 ]),
             Wizard\Step::make('规格库存')
                 ->icon(Heroicon::OutlinedTag)
@@ -157,7 +157,7 @@ class ProductForm
     {
         return [
             Section::make('基础信息')->schema(static::baseInfoFields())->columns(2),
-            Section::make('图片信息')->schema(static::imageInfoFields())->columns(2),
+            Section::make('定时任务')->schema([ScheduledTask::scheduleRepeater('sn_product')])->columns(1),
             Section::make('库存信息')->schema(static::stockInfoFields())->columns(2),
             Section::make('规格信息')->schema(static::specInfoFields()),
             Section::make('参数信息')->schema(static::paramsInfoFields()),
@@ -168,7 +168,7 @@ class ProductForm
     // ========================= 字段组合方法 =========================
 
     /**
-     * 基础信息字段
+     * 基础信息字段（含产品主图与轮播图）
      */
     public static function baseInfoFields(): array
     {
@@ -176,17 +176,7 @@ class ProductForm
             static::titleField()->columnSpan(2),
             static::subtitleField()->columnSpan(2),
             static::statusField()->columnSpan(2),
-            ScheduledTask::scheduleRepeater('sn_product')->columnSpan(2),
             static::orderField()->columnSpan(2),
-        ];
-    }
-
-    /**
-     * 图片信息字段
-     */
-    public static function imageInfoFields(): array
-    {
-        return [
             static::imageField()->columnSpan(2),
             static::imagesField()->columnSpan(2),
         ];
@@ -281,6 +271,7 @@ class ProductForm
         return Forms\Components\ToggleButtons::make('status')
             ->default(ProductStatus::Up)
             ->inline()
+            ->grouped()
             ->options(ProductStatus::class);
     }
 

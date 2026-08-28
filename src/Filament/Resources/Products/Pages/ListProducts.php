@@ -42,6 +42,10 @@ class ListProducts extends ListRecords
                 ->label(ProductStatus::Hidden->getLabel())
                 ->badge(fn () => $this->getCount(ProductStatus::Hidden))
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', ProductStatus::Hidden)),
+            'draft' => Tab::make()
+                ->label(ProductStatus::Draft->getLabel())
+                ->badge(fn () => $this->getCount(ProductStatus::Draft))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', ProductStatus::Draft)),
         ];
     }
 

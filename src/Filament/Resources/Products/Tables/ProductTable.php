@@ -155,10 +155,6 @@ class ProductTable
     {
         return Tables\Columns\TextColumn::make('status')
             ->label('状态')
-            ->badge()
-            ->formatStateUsing(fn (ProductStatus $state): string => $state->getLabel())
-            ->color(fn (ProductStatus $state): string => $state->getColor())
-            ->icon(fn (ProductStatus $state): ?string => $state->getIcon())
             ->toggleable();
     }
 
