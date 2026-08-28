@@ -560,11 +560,15 @@ class ProductSpecForm
             $combos = $next;
         }
 
-        // 以 id 优先的组合指纹索引当前组合，保留已填的值与记录 id
-        $existing = collect($currentVariants)->keyBy(fn (array $item): string => static::variantKey(
-            (array) ($item['spec_ids'] ?? []),
-            (array) ($item['spec_names'] ?? []),
-        ));
+        // 以 id 优先的组合指纹索引当前组合，保留已填的值、记录 id 与 item key
+        // （item key 稳定是 Livewire DOM diff 正确移动行 / 复用行内输入的前提，
+        // 重排或改名后 UI 顺序与值才能即时刷新，仅有新组合使用新 uuid）
+        $existing = collect($currentVariants)->mapWithKeys(fn (array $item, $key): array => [
+            static::variantKey(
+                (array) ($item['spec_ids'] ?? []),
+                (array) ($item['spec_names'] ?? []),
+            ) => ['key' => (string) $key, 'item' => $item],
+        ]);
 
         $variants = [];
 
@@ -583,11 +587,12 @@ class ProductSpecForm
                 }
             }
 
-            $old = $isMainMultiple ? [] : (array) $existing->get($key, []);
+            $hit = $existing->get($key);
+            $old = $isMainMultiple ? [] : (array) ($hit['item'] ?? []);
             $from = $isMainMultiple ? (array) $source : $old;
 
-            $variants[(string) Str::uuid()] = [
-                'id' => $old['id'] ?? null,
+            $variants[$hit['key'] ?? (string) Str::uuid()] = [
+                'id' => $hit['item']['id'] ?? null,
                 'spec_ids' => $ids,
                 'spec_names' => $names,
                 'product_spec_text' => implode(',', $names),

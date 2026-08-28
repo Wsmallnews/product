@@ -1,5 +1,10 @@
 @php
 use Wsmallnews\Product\Product;
+
+$slides = [];
+foreach ($product->getMedia('product_image') as $media) {
+    $slides[] = ['image' => $media->getUrl()];
+}
 @endphp
 
 @assets
@@ -15,7 +20,7 @@ use Wsmallnews\Product\Product;
 })">
     <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white">
         <div class="w-full">
-            <x-sn-support::swiper :images="$product->galleryUrls" class="w-full" :has-thumb="true" :thumb-scale="20" thumb-position="left" />
+            <x-sn-support::swiper :slides="$slides" class="w-full" ratio="1/1" :has-thumb="true" thumb-position="left" :thumb-size="72" />
         </div>
 
         <div class="w-full flex flex-col gap-y-4">
