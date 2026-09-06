@@ -7,7 +7,7 @@ foreach ($product->getMedia('product_image') as $media) {
 }
 @endphp
 
-<div class="w-full flex flex-col gap-(--sn-space-page)" x-data="detailManager({
+<div class="w-full flex flex-col sn-gap" x-data="detailManager({
     product: @js($product)
 })">
     <div class="w-full sn-container sn-padded grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -57,18 +57,18 @@ foreach ($product->getMedia('product_image') as $media) {
 
         <div class="w-full lg:w-2/3">
             <div class="w-full">
-                <div id="product-evaluate" class="tab-content sn-h3-text my-4 scroll-mt-16">用户评价</div>
+                <div id="product-evaluate" class="tab-content sn-h3-text sn-my scroll-mt-16">用户评价</div>
                 <div class="h-[500px]"></div>
             </div>
 
             @if($product->params)
                 <div class="w-full">
-                    <div id="product-params" class="tab-content sn-h3-text my-4 scroll-mt-16">参数信息</div>
+                    <div id="product-params" class="tab-content sn-h3-text sn-my scroll-mt-16">参数信息</div>
                     <div class="w-full flex flex-row flex-wrap overflow-hidden sn-rounded border-t border-l border-gray-200 dark:border-gray-700">
                         @foreach($product->params as $key => $param)
                             <div class="w-full sm:w-1/2 min-h-14 flex flex-row justify-start items-center border-r border-b border-gray-200 dark:border-gray-700">
-                                <div class="w-2/5 h-full flex items-center bg-gray-100 dark:bg-gray-800 px-(--sn-space-card) sn-content-text">{{$key}}</div>
-                                <div class="w-3/5 h-full flex items-center px-(--sn-space-card) sn-content-text">{{$param}}</div>
+                                <div class="w-2/5 h-full flex items-center bg-gray-100 dark:bg-gray-800 sn-px sn-content-text">{{$key}}</div>
+                                <div class="w-3/5 h-full flex items-center sn-px sn-content-text">{{$param}}</div>
                             </div>
                         @endforeach
                     </div>
@@ -77,7 +77,7 @@ foreach ($product->getMedia('product_image') as $media) {
 
             @if($product->content)
                 <div class="w-full">
-                    <div id="product-content" class="tab-content sn-h3-text my-4 scroll-mt-16">图文详情</div>
+                    <div id="product-content" class="tab-content sn-h3-text sn-my scroll-mt-16">图文详情</div>
                     <div class="w-full [&_img]:w-full">{!! $product->content !!}</div>
                 </div>
             @endif
