@@ -268,11 +268,7 @@ class ProductForm
      */
     public static function statusField(): Forms\Components\ToggleButtons
     {
-        return Forms\Components\ToggleButtons::make('status')
-            ->default(ProductStatus::Up)
-            ->inline()
-            ->grouped()
-            ->options(ProductStatus::class);
+        return FormComponents::statusToggleButtons(ProductStatus::class);
     }
 
     /**
@@ -280,11 +276,7 @@ class ProductForm
      */
     public static function orderField(): Forms\Components\TextInput
     {
-        return Forms\Components\TextInput::make('order_column')
-            ->label('排序')
-            ->integer()
-            ->placeholder('正序排列')
-            ->rules(['integer', 'min:0']);
+        return FormComponents::orderColumnInput();
     }
 
     /**

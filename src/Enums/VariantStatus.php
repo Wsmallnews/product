@@ -21,8 +21,8 @@ enum VariantStatus: string implements HasColor, HasIcon, HasLabel
     public function getLabel(): string | Htmlable | null
     {
         return match ($this) {
-            self::Up => '上架中',
-            self::Down => '下架',
+            self::Up => __('sn-product::product.variant_status.up'),
+            self::Down => __('sn-product::product.variant_status.down'),
         };
     }
 
@@ -30,7 +30,7 @@ enum VariantStatus: string implements HasColor, HasIcon, HasLabel
     {
         return match ($this) {
             self::Up => 'primary',
-            self::Down => 'gray',
+            self::Down => 'danger',
         };
     }
 

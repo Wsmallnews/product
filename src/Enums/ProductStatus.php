@@ -23,13 +23,13 @@ enum ProductStatus: string implements HasColor, HasIcon, HasLabel
 
     case Draft = 'draft';
 
-    public function getLabel(): ?string
+    public function getLabel(): string | Htmlable | null
     {
         return match ($this) {
-            self::Up => '上架中',
-            self::Down => '下架',
-            self::Hidden => '隐藏',
-            self::Draft => '草稿',
+            self::Up => __('sn-product::product.product_status.up'),
+            self::Down => __('sn-product::product.product_status.down'),
+            self::Hidden => __('sn-product::product.product_status.hidden'),
+            self::Draft => __('sn-product::product.product_status.draft'),
         };
     }
 
@@ -38,7 +38,7 @@ enum ProductStatus: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::Up => 'primary',
             self::Down => 'danger',
-            self::Hidden => 'info',
+            self::Hidden => 'gray',
             self::Draft => 'gray',
         };
     }

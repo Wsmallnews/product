@@ -42,10 +42,10 @@ class ProductTable
                 static::createdAtColumn(),
                 static::updatedAtColumn(),
             ])
-            ->reorderable('order_column')
+            ->reorderable('order_column', direction: 'desc')
             ->defaultSort('order_column', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['media']))
-            ->searchPlaceholder('搜索产品标题')
+            ->searchPlaceholder(__('sn-product::product.product_resource.table.search_placeholder'))
             ->filtersFormWidth(Width::Medium)
             ->filters([
                 static::statusFilter(),
@@ -138,7 +138,7 @@ class ProductTable
     protected static function createdAtColumn(): Tables\Columns\TextColumn
     {
         return Tables\Columns\TextColumn::make('created_at')
-            ->label('创建时间')
+            ->label(__('sn-product::product.product_resource.table.created_at'))
             ->toggleable()
             ->sortable();
     }
@@ -146,7 +146,7 @@ class ProductTable
     protected static function updatedAtColumn(): Tables\Columns\TextColumn
     {
         return Tables\Columns\TextColumn::make('updated_at')
-            ->label('更新时间')
+            ->label(__('sn-product::product.product_resource.table.updated_at'))
             ->toggleable()
             ->sortable();
     }
@@ -154,7 +154,8 @@ class ProductTable
     protected static function statusColumn(): Tables\Columns\TextColumn
     {
         return Tables\Columns\TextColumn::make('status')
-            ->label('状态')
+            ->label(__('sn-product::product.product_resource.table.status'))
+            ->badge()
             ->toggleable();
     }
 
@@ -162,16 +163,14 @@ class ProductTable
 
     protected static function statusFilter(): Tables\Filters\SelectFilter
     {
-        return Tables\Filters\SelectFilter::make('status')
-            ->label('状态')
-            ->options(ProductStatus::class)
+        return FilterComponents::statusFilter(ProductStatus::class)
             ->multiple();
     }
 
     protected static function specTypeFilter(): Tables\Filters\SelectFilter
     {
         return Tables\Filters\SelectFilter::make('spec_type')
-            ->label('规格类型')
+            ->label(__('sn-product::product.product_resource.filter.spec_type'))
             ->options(ProductSpecType::class);
     }
 
