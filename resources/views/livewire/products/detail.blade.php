@@ -7,10 +7,10 @@ foreach ($product->getMedia('product_image') as $media) {
 }
 @endphp
 
-<div class="w-full flex flex-col sn-gap" x-data="detailManager({
+<div class="w-full flex flex-col sn-gap @container" x-data="detailManager({
     product: @js($product)
 })">
-    <div class="w-full sn-container sn-padded grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+    <div class="w-full sn-container sn-padded grid grid-cols-1 @2xl:grid-cols-2 gap-4 @2xl:gap-6">
         <div class="w-full">
             <x-sn-support::swiper :slides="$slides" class="w-full" ratio="1/1" :has-thumb="true" thumb-position="left" :thumb-size="72" />
         </div>
@@ -55,7 +55,7 @@ foreach ($product->getMedia('product_image') as $media) {
             </x-sn-support::tabs.item>
         </x-sn-support::tabs>
 
-        <div class="w-full lg:w-2/3">
+        <div class="w-full @5xl:w-2/3">
             <div class="w-full">
                 <div id="product-evaluate" class="tab-content sn-h3-text sn-my scroll-mt-16">用户评价</div>
                 <div class="h-[500px]"></div>
@@ -66,7 +66,7 @@ foreach ($product->getMedia('product_image') as $media) {
                     <div id="product-params" class="tab-content sn-h3-text sn-my scroll-mt-16">参数信息</div>
                     <div class="w-full flex flex-row flex-wrap overflow-hidden sn-rounded border-t border-l border-gray-200 dark:border-gray-700">
                         @foreach($product->params as $key => $param)
-                            <div class="w-full sm:w-1/2 min-h-14 flex flex-row justify-start items-center border-r border-b border-gray-200 dark:border-gray-700">
+                            <div class="w-full @2xl:w-1/2 min-h-14 flex flex-row justify-start items-center border-r border-b border-gray-200 dark:border-gray-700">
                                 <div class="w-2/5 h-full flex items-center bg-gray-100 dark:bg-gray-800 sn-px sn-content-text">{{$key}}</div>
                                 <div class="w-3/5 h-full flex items-center sn-px sn-content-text">{{$param}}</div>
                             </div>
