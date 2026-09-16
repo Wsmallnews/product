@@ -268,7 +268,7 @@ class ProductForm
      */
     public static function statusField(): Forms\Components\ToggleButtons
     {
-        return FormComponents::statusToggleButtons(ProductStatus::class);
+        return FormComponents::enumsToggleButtons(ProductStatus::class);
     }
 
     /**

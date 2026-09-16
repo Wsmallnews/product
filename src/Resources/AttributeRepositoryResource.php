@@ -51,7 +51,7 @@ class AttributeRepositoryResource extends SupportResource
                             ->columnSpan(1),
                         Forms\Components\ToggleButtons::make('status')
                             ->default(AttributeStatus::Up)
-                            ->inline()
+                            ->inline()->grouped()
                             ->options(AttributeStatus::class)->columnSpanFull(),
                     ])->columns(2),
                 Forms\Components\Section::make()
