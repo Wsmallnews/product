@@ -12,7 +12,6 @@ use Wsmallnews\Product\Filament\Resources\Products\Pages\EditProduct;
 use Wsmallnews\Product\Filament\Resources\Products\Pages\EditProductWizard;
 use Wsmallnews\Product\Filament\Resources\Products\Pages\ListProducts;
 use Wsmallnews\Product\Filament\Resources\Products\Pages\ViewProduct;
-use Wsmallnews\Product\ProductPlugin;
 use Wsmallnews\Product\Support\Utils;
 use Wsmallnews\Support\Filament\Concerns\CanBeConfigured;
 use Wsmallnews\Support\Filament\Resources\ResourceConfiguration;
@@ -55,10 +54,5 @@ final class ProductResource extends BaseResource
         $resolveTable = self::resolveCustomProperty('table');
 
         return $resolveTable instanceof Closure ? $resolveTable($table, self::class) : parent::table($table);
-    }
-
-    public static function getEssentialsPlugin(): ?ProductPlugin
-    {
-        return ProductPlugin::get();
     }
 }

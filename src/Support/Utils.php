@@ -30,47 +30,54 @@ class Utils
     /**
      * Get scopeable configuration as ScopeableContext object.
      *
+     * @param  string|null  $key  实例键（null = main 默认实例）
+     *
      * @throws ProductException
      */
-    public static function getScopeableContext(): ScopeableContext
+    public static function getScopeableContext(?string $key = null): ScopeableContext
     {
         try {
-            return SupportUtils::getScopeFromConfig('sn-product.scopeable');
+            return SupportUtils::getScopeFromInstances('sn-product.scopeables', $key);
         } catch (InvalidScopeException $e) {
             throw new ProductException('Scopeable configuration error. ' . $e->getMessage());
         }
     }
 
     /**
-     * Get scopeable array (legacy method for backward compatibility).
+     * Get scopeable array.
      *
+     * @param  string|null  $key  实例键（null = main 默认实例）
      * @return array{scope_type: string, scope_id: int}
      *
      * @throws ProductException
      */
-    public static function getScopeable(): array
+    public static function getScopeable(?string $key = null): array
     {
-        return self::getScopeableContext()->toArray();
+        return self::getScopeableContext($key)->toArray();
     }
 
     /**
      * Get scope type.
      *
+     * @param  string|null  $key  实例键（null = main 默认实例）
+     *
      * @throws ProductException
      */
-    public static function getScopeType(): string
+    public static function getScopeType(?string $key = null): string
     {
-        return self::getScopeableContext()->scopeType;
+        return self::getScopeableContext($key)->scopeType;
     }
 
     /**
      * Get scope ID.
      *
+     * @param  string|null  $key  实例键（null = main 默认实例）
+     *
      * @throws ProductException
      */
-    public static function getScopeId(): int
+    public static function getScopeId(?string $key = null): int
     {
-        return self::getScopeableContext()->scopeId;
+        return self::getScopeableContext($key)->scopeId;
     }
 
     /**
