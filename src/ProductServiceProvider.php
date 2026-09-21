@@ -17,6 +17,8 @@ use Wsmallnews\Product\Models\Product as ProductModel;
 use Wsmallnews\Product\Models\Spec as SpecModel;
 use Wsmallnews\Product\Models\Variant as VariantModel;
 use Wsmallnews\Support\Facades\ScheduledTask;
+use Wsmallnews\Support\Features\Modules\Module;
+use Wsmallnews\Support\Features\Modules\ModuleRegistry;
 
 class ProductServiceProvider extends PackageServiceProvider
 {
@@ -34,7 +36,15 @@ class ProductServiceProvider extends PackageServiceProvider
             ->hasViews(static::$viewNamespace);
     }
 
-    public function packageRegistered(): void {}
+    public function packageRegistered(): void
+    {
+        // 模块身份登记（ModuleRegistry 单一事实源：类反查/存在性校验/插件实例）
+        ModuleRegistry::register(new Module(
+            id: static::$name,
+            namespace: 'Wsmallnews\\Product',
+            plugin: ProductPlugin::class,
+        ));
+    }
 
     /**
      * Boot the package services.
