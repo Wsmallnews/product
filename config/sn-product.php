@@ -1,7 +1,6 @@
 <?php
 
 use Wsmallnews\Product\Enums\FormLayout;
-use Wsmallnews\Product\Filament\Resources\Products\ProductResource;
 use Wsmallnews\Product\Models;
 use Wsmallnews\Support\Enums\ContentType;
 
@@ -65,6 +64,10 @@ return [
     /**
      * Panel register
      *
+     * product 是基础扩展包：自身不注册后台资源，由消费模块（如 shop）在自己的
+     * panel_register 中注册 ProductResource——资源落消费模块的 scopeable
+     * （module_id 注册即归属，后台创建的产品存消费模块 main 实例 scope）
+     *
      * global_default 共享默认（非 FQCN 的 string key）会合并到所有条目：
      *   - navigation_group: 所有页面/资源的默认导航组
      *
@@ -77,9 +80,7 @@ return [
         'global_default' => [
             'navigation_group' => '产品管理',
         ],
-        'resources' => [
-            ProductResource::class,
-        ],
+        'resources' => [],
         'pages' => [],
     ],
 

@@ -42,4 +42,15 @@ return [
         ],
     ],
 
+    'components' => [
+        'products_empty_heading' => 'No products yet',
+        'products_empty_description' => 'Products will appear here once they are on sale.',
+        'select_spec_first' => 'Please select a specification first.',
+        'current_spec' => 'Current specification',
+        'product_num' => 'Quantity',
+        'buy_now' => 'Buy Now',
+        'product_params' => 'Parameters',
+        'product_content' => 'Details',
+    ],
+
 ];

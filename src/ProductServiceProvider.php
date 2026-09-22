@@ -9,6 +9,7 @@ use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Filesystem\Filesystem;
+use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Wsmallnews\Product\Commands\ProductInstallCommand;
@@ -53,12 +54,19 @@ class ProductServiceProvider extends PackageServiceProvider
      */
     public function packageBooted()
     {
-        // Register model morph map
+        // 注册模型别名
         Relation::enforceMorphMap([
             'sn_product' => ProductModel::class,
             'sn_product_spec' => SpecModel::class,
             'sn_product_variant' => VariantModel::class,
         ]);
+
+        // 注册 livewire 命名空间（自动发现 src/Livewire/ 下的组件：
+        // sn-product::components.product.products / sn-product::components.product.product）
+        Livewire::addNamespace(
+            namespace: 'sn-product',
+            classNamespace: 'Wsmallnews\\Product\\Livewire'
+        );
 
         // Asset Registration
         FilamentAsset::register(

@@ -21,6 +21,7 @@ use Wsmallnews\Preference\Models\Concerns\Preferenceable\Viewable;
 use Wsmallnews\Product\Database\Factories\ProductFactory;
 use Wsmallnews\Product\Enums\ProductSpecType;
 use Wsmallnews\Product\Enums\ProductStatus;
+use Wsmallnews\Product\Enums\ProductStockType;
 use Wsmallnews\Support\Casts\CounterCast;
 use Wsmallnews\Support\Casts\MoneyCast;
 use Wsmallnews\Support\Contracts\HasSnSubject;
@@ -44,6 +45,7 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
     protected $casts = [
         'counter' => CounterCast::class,
         'spec_type' => ProductSpecType::class,
+        'stock_type' => ProductStockType::class,
         'params' => 'array',
         'price' => MoneyCast::class,
         'published_at' => 'datetime',
@@ -55,6 +57,14 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
      * 搜索字段（用于 morphFilter 关键词搜索）。
      */
     public static array $keywordSearchFields = ['title', 'subtitle'];
+
+    /**
+     * 上架中（列表展示口径：隐藏产品不进列表，直达链接可买）。
+     */
+    public function scopeUp($query)
+    {
+        return $query->where('status', ProductStatus::Up);
+    }
 
     protected static function newFactory()
     {

@@ -42,4 +42,15 @@ return [
         ],
     ],
 
+    'components' => [
+        'products_empty_heading' => '暂无产品',
+        'products_empty_description' => '产品上架后将在此展示',
+        'select_spec_first' => '请先选择规格',
+        'current_spec' => '当前规格',
+        'product_num' => '数量',
+        'buy_now' => '立即购买',
+        'product_params' => '参数信息',
+        'product_content' => '图文详情',
+    ],
+
 ];
