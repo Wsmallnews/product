@@ -33,7 +33,7 @@ return new class extends Migration
             $table->unsignedBigInteger('scope_id')->default(0)->comment('范围');
             $table->unsignedBigInteger('parent_id')->default(0)->comment('所属属性');
             $table->string('name', 60)->nullable()->comment('名称');
-            $table->unsignedInteger('price')->nullable()->comment('价格');
+            $table->unsignedBigInteger('price')->nullable()->comment('价格');
             $table->string('description')->nullable()->comment('描述');
             $table->json('options')->nullable()->comment('选项');
             $table->unsignedInteger('order_column')->nullable()->index()->comment('排序');
