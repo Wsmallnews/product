@@ -53,4 +53,19 @@ return [
         'product_content' => '图文详情',
     ],
 
+    'pipes' => [
+        'variant_not_found' => '商品规格不存在或已下架',
+        'empty_items' => '请选择要购买的商品',
+        'stock_not_enough' => '商品库存不足：:title',
+    ],
+
+    // 订单展示字段集（fields_infos 的 text/desc 存键，渲染侧 __() 求值）
+    'order_fields' => [
+        'original_product_amount' => '商品原价总价',
+        'product_amount' => '商品总价',
+        'relate_original_amount' => '商品原价总价',
+        'relate_amount' => '商品总价',
+        'desc_items' => '共 :num 件商品',
+    ],
+
 ];

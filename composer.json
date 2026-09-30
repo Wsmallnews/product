@@ -26,6 +26,7 @@
         "filament/filament": "^4.0 || ^5.0",
         "spatie/laravel-package-tools": "^1.15.0",
         "wsmallnews/category": "^1.0",
+        "wsmallnews/order": "^1.0",
         "wsmallnews/preference": "^1.0",
         "wsmallnews/support": "^1.0"
     },

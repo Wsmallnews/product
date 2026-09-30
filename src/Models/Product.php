@@ -48,6 +48,7 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
         'stock_type' => ProductStockType::class,
         'params' => 'array',
         'price' => MoneyCast::class . ':currency',
+        'original_price' => MoneyCast::class . ':currency',
         'published_at' => 'datetime',
         'options' => 'array',
         'status' => ProductStatus::class,

@@ -42,7 +42,7 @@
                         @endif
 
                         <div class="mt-auto pt-1.5">
-                            <x-sn-support::amount :amount="$product->price" />
+                            <x-sn-support::amount :amount="$product->price" amount-size="text-xl" />
                         </div>
                     </div>
 

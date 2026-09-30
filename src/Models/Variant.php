@@ -20,6 +20,7 @@ class Variant extends SupportModel
         'product_spec_text' => ImplodeCast::class,
         'spec_type' => ProductSpecType::class,
         'price' => MoneyCast::class,
+        'original_price' => MoneyCast::class,
         'status' => VariantStatus::class,
     ];
 

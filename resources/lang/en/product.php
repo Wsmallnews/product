@@ -53,4 +53,19 @@ return [
         'product_content' => 'Details',
     ],
 
+    'pipes' => [
+        'variant_not_found' => 'Product variant not found or unavailable.',
+        'empty_items' => 'Please select products to purchase.',
+        'stock_not_enough' => 'Insufficient stock: :title',
+    ],
+
+    // Order display fields (keys stored in fields_infos text/desc, resolved via __() at render)
+    'order_fields' => [
+        'original_product_amount' => 'Original product total',
+        'product_amount' => 'Product total',
+        'relate_original_amount' => 'Original product total',
+        'relate_amount' => 'Product total',
+        'desc_items' => ':num item(s) in total',
+    ],
+
 ];

@@ -118,14 +118,27 @@ class ProductServiceProvider extends PackageServiceProvider
                     TextInput::make('price')->label('促销价')->numeric()->required(),
                     TextInput::make('original_price')->label('原价')->numeric(),
                 ],
-                // handler 本次预留，多规格逻辑待 SKU/Variant 完善后实现
+                // 统一改价：SPU 价格快照 + 多规格时全部变体同步（表单十进制元，MoneyCast 转分）
                 'handler' => function ($task, ?array $payload): bool {
+                    $product = $task->schedulable;
+
                     $updates = array_filter([
                         'price' => $payload['price'] ?? null,
                         'original_price' => $payload['original_price'] ?? null,
                     ], fn ($v) => $v !== null);
 
-                    return $task->schedulable->update($updates);
+                    if ($updates === []) {
+                        return false;
+                    }
+
+                    $product->update($updates);
+
+                    if ($product->spec_type !== ProductSpecType::Single) {
+                        // 多规格/多单位：变体统一改价，保持「SPU 价 = 最低变体价」口径
+                        $product->variants()->update($updates);
+                    }
+
+                    return true;
                 },
             ],
         ]);
