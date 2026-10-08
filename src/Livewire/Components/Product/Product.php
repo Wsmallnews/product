@@ -112,7 +112,7 @@ class Product extends Base
         }
 
         // 购买事件：产品包不感知交易模块，由消费页面监听后跳转下单流程
-        $this->dispatch('product-buy', ...[
+        $this->dispatch('sn-product-buy', ...[
             'type' => 'product',
             'from' => 'product-detail',
             'relate_items' => json_encode([

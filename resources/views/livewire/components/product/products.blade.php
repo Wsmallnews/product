@@ -7,8 +7,11 @@
     @if ($products->isEmpty())
         <x-sn-support::empty :contained="$contained" icon="{{ \Filament\Support\Icons\Heroicon::OutlinedShoppingBag }}" heading="{{ __('sn-product::product.components.products_empty_heading') }}" description="{{ __('sn-product::product.components.products_empty_description') }}" />
     @else
-        {{-- 网格断点按容器宽度：1/2/3/4/5/6 列递进，嵌入窄槽（编排/半宽）时自动降列 --}}
-        <div class="w-full grid grid-cols-1 @2xl:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4 @6xl:grid-cols-5 @7xl:grid-cols-6 gap-2.5">
+        {{-- 网格卡片型容器模式（规范参考）：子项商品卡自带卡片外观，容器按 $contained 条件穿卡片皮 + 内边距 --}}
+        <div @class([
+            'w-full grid grid-cols-1 @2xl:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4 @6xl:grid-cols-5 @7xl:grid-cols-6 sn-gap',
+            'sn-container sn-padded' => $contained,
+        ])>
             @foreach ($products as $product)
                 @php
                     $detailUrl = $url($product);
@@ -20,9 +23,9 @@
                         <div class="w-full flex flex-col grow">
                     @endif
 
-                    <div class="w-full relative pb-[100%] bg-gray-100 dark:bg-gray-800">
+                    <div class="w-full relative pb-[100%] sn-media-bg">
                         @if ($product->getFirstMediaUrl('product_image'))
-                            <img src="{{ $product->getFirstMediaUrl('product_image') }}" class="size-full object-cover absolute transition duration-700 ease-out group-hover:scale-105" alt="{{ $product->title }}" loading="lazy" />
+                            <img src="{{ $product->getFirstMediaUrl('product_image') }}" class="size-full object-cover absolute sn-motion-scale" alt="{{ $product->title }}" loading="lazy" />
                         @else
                             <div class="sn-image-placeholder absolute inset-0">
                                 <x-filament::icon :icon="\Filament\Support\Icons\Heroicon::OutlinedPhoto" class="w-10 h-10" aria-hidden="true" />

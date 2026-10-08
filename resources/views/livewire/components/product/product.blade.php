@@ -15,7 +15,7 @@
     ])>
         <div class="w-full min-w-0">
             @if ($slides)
-                <x-sn-support::swiper :slides="$slides" class="w-full" ratio="1/1" :has-thumb="true" thumb-position="left" :thumb-size="72" />
+                <x-sn-support::swiper :slides="$slides" class="w-full" ratio="1/1" rounded="rounded-(--sn-radius-card)" :has-thumb="true" thumb-position="left" :thumb-size="72" />
             @else
                 <div class="w-full aspect-square sn-image-placeholder">
                     <x-filament::icon :icon="Heroicon::OutlinedPhoto" class="w-12 h-12" aria-hidden="true" />
