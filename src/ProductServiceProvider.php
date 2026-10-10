@@ -155,7 +155,10 @@ class ProductServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('product', __DIR__ . '/../resources/dist/components/product.js'),
+            // 详情页购买盒（本地规格选择/计价）与锚点 tab：Filament 资产管线注册（x-load 按需加载），
+            // 不在组件视图内联脚本（嵌套组件内联 Alpine 经 Livewire 水合后不生效）
+            AlpineComponent::make('sn-product-components-product-buy', __DIR__ . '/../resources/dist/components/product-buy.js'),
+            AlpineComponent::make('sn-product-components-product-tabs', __DIR__ . '/../resources/dist/components/product-tabs.js'),
             // Css::make('product-styles', __DIR__ . '/../resources/dist/product.css')->loadedOnRequest(),
             // Js::make('product-scripts', __DIR__ . '/../resources/dist/product.js'),
         ];

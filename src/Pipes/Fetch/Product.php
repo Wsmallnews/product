@@ -29,7 +29,7 @@ class Product implements FetchPipeInterface
             $product = ProductModel::query()
                 ->up()
                 ->snScope($scope_type, $scope_id)
-                ->with('variants')
+                ->with(['variants', 'extraItems.extra.parent'])
                 ->findOrFail($buyInfo['product_id'] ?? 0);
 
             $buyInfo['product'] = $product;

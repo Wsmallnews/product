@@ -159,6 +159,14 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
         return $this->variants()->one();
     }
 
+    /**
+     * 挂载的附加项（选项粒度，规则经 extra.parent 组行读取）。
+     */
+    public function extraItems(): HasMany
+    {
+        return $this->hasMany(ExtraItem::class, 'product_id', 'id')->orderBy('order_column')->orderBy('id');
+    }
+
     public function team(): BelongsTo
     {
         return $this->belongsTo(SupportUtils::getTenantModel());

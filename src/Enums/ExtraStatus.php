@@ -10,7 +10,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Wsmallnews\Support\Enums\Traits\EnumHelper;
 
-enum AttributeStatus: string implements HasColor, HasIcon, HasLabel
+enum ExtraStatus: string implements HasColor, HasIcon, HasLabel
 {
     use EnumHelper;
 
@@ -21,8 +21,8 @@ enum AttributeStatus: string implements HasColor, HasIcon, HasLabel
     public function getLabel(): string | Htmlable | null
     {
         return match ($this) {
-            self::Up => __('sn-product::product.attribute_status.up'),
-            self::Down => __('sn-product::product.attribute_status.down'),
+            self::Up => __('sn-product::product.extra_status.up'),
+            self::Down => __('sn-product::product.extra_status.down'),
         };
     }
 

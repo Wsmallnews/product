@@ -11,6 +11,7 @@ use Wsmallnews\Product\Enums\ProductStockType;
 use Wsmallnews\Product\Enums\VariantStatus;
 use Wsmallnews\Product\Livewire\Components\Base;
 use Wsmallnews\Product\Models\Variant;
+use Wsmallnews\Product\Support\ExtraManager;
 use Wsmallnews\Product\Support\Utils;
 use Wsmallnews\Support\Facades\Seo;
 use Wsmallnews\Support\Livewire\Concerns\CanBeContained;
@@ -27,28 +28,6 @@ class Product extends Base
     #[Locked]
     public ?int $id = null;
 
-    /**
-     * 购买数量
-     */
-    public int $productNum = 1;
-
-    /**
-     * 已选规格：parent_spec_id => child_spec_id
-     *
-     * @var array<int, int>
-     */
-    public array $selectedSpecs = [];
-
-    public function chooseSpec(int $parentId, int $specId): void
-    {
-        // 再次点击已选规格 = 取消选中
-        if (($this->selectedSpecs[$parentId] ?? null) === $specId) {
-            unset($this->selectedSpecs[$parentId]);
-        } else {
-            $this->selectedSpecs[$parentId] = $specId;
-        }
-    }
-
     public function render()
     {
         $product = $this->loadProduct();
@@ -64,11 +43,13 @@ class Product extends Base
         $parentSpecs = $this->getParentSpecs($product);
         $saleableVariants = $this->getSaleableVariants($product);
 
-        // 规格可选状态：其他规格组的当前选择下，某个规格值是否仍能组合出可售变体
-        $specSelectable = $this->getSpecSelectable($parentSpecs, $saleableVariants);
+        // 规格选择契约：PC 前端（Alpine）与将来 uniapp 端消费同一份 schema，
+        // 选择/计价在客户端本地完成，服务端 buy()/下单管道始终按 DB 重新校验
+        $specSchema = $this->getSpecSchema($product, $parentSpecs, $saleableVariants);
 
-        // 已选变体：全部规格组选中后，规格组合与所选一致的可售变体
-        $choosedVariant = $this->getChoosedVariant($product, $parentSpecs, $saleableVariants);
+        // 价格初始展示件（SEO / Alpine 加载前的回退）：单规格取首个可售变体价，多规格取 SPU 价
+        $initialVariant = $product->spec_type === ProductSpecType::Single ? $saleableVariants->first() : null;
+        $initialPriceParts = sn_money()->formatParts($initialVariant?->price ?? $product->price);
 
         // 轮播图：主图在前，轮播图在后
         $slides = [];
@@ -82,13 +63,17 @@ class Product extends Base
         return view('sn-product::livewire.components.product.product', [
             'product' => $product,
             'parentSpecs' => $parentSpecs,
-            'specSelectable' => $specSelectable,
-            'choosedVariant' => $choosedVariant,
+            'specSchema' => $specSchema,
+            'initialPriceParts' => $initialPriceParts,
             'slides' => $slides,
         ]);
     }
 
-    public function buy(): void
+    /**
+     * 立即购买：服务端只校验变体归属与可售状态（可售变体集合内匹配），
+     * 前端本地选中的展示态不作为信任来源
+     */
+    public function buy(int $variantId = 0, int $productNum = 0, ?array $extras = null): void
     {
         $product = filled($this->id) ? $this->loadProduct(false) : null;
 
@@ -96,11 +81,8 @@ class Product extends Base
             return;
         }
 
-        $choosedVariant = $this->getChoosedVariant(
-            $product,
-            $this->getParentSpecs($product),
-            $this->getSaleableVariants($product),
-        );
+        $choosedVariant = $this->getSaleableVariants($product)
+            ->first(fn (Variant $variant) => $variant->id === $variantId);
 
         if (! $choosedVariant) {
             Notification::make()
@@ -119,8 +101,8 @@ class Product extends Base
                 [
                     'product_id' => $product->id,
                     'product_variant_id' => $choosedVariant->id,
-                    'product_num' => $this->productNum,
-                    'product_attributes' => [],
+                    'product_num' => max(1, $productNum),
+                    'extras' => array_values((array) $extras),
                 ],
             ]),
         ]);
@@ -139,6 +121,7 @@ class Product extends Base
                 'content',
                 'specs.children',
                 'variants.specs',
+                'extraItems.extra.parent',
             ]);
 
         if ($scopeable) {
@@ -177,57 +160,50 @@ class Product extends Base
     }
 
     /**
-     * 已选变体：全部规格组均已选择时，规格组合与所选完全一致的可售变体；
-     * 单规格产品直接返回唯一可售变体
-     */
-    protected function getChoosedVariant($product, Collection $parentSpecs, Collection $saleableVariants): ?Variant
-    {
-        if ($product->spec_type === ProductSpecType::Single) {
-            return $saleableVariants->first();
-        }
-
-        if ($parentSpecs->isEmpty() || $this->selectedSpecs === []) {
-            return null;
-        }
-
-        // 每个规格组都已选择，才存在确定组合
-        if ($parentSpecs->pluck('id')->diff(array_keys($this->selectedSpecs))->isNotEmpty()) {
-            return null;
-        }
-
-        $selectedIds = collect(array_values($this->selectedSpecs))->sort()->values()->all();
-
-        return $saleableVariants->first(
-            fn (Variant $variant) => $variant->specs->pluck('id')->sort()->values()->all() === $selectedIds
-        );
-    }
-
-    /**
-     * 规格可选状态：当前其他规格组的选择下，某个规格值是否仍能组合出可售变体
+     * 规格选择 schema（版本化契约）：PC Alpine 与 uniapp 接口共用同一结构
      *
-     * @return array<int, array<int, bool>> parent_spec_id => [child_spec_id => selectable]
+     * @return array{
+     *     schema_version: int,
+     *     spec_type: string,
+     *     specs: list<array{id: int, name: string, children: list<array{id: int, name: string, image: ?string}>}>,
+     *     variants: list<array{id: int, spec_ids: list<int>, spec_text: list<string>, price: int, price_parts: array{symbol: string, amount: string}, original_price_parts: ?array{symbol: string, amount: string}, stock: ?int}>,
+     *     addons: list<mixed>
+     * }
      */
-    protected function getSpecSelectable(Collection $parentSpecs, Collection $saleableVariants): array
+    protected function getSpecSchema($product, Collection $parentSpecs, Collection $saleableVariants): array
     {
-        $selectable = [];
+        return [
+            'schema_version' => 1,
+            'spec_type' => $product->spec_type->value,
+            'specs' => $parentSpecs->map(fn ($parentSpec) => [
+                'id' => (int) $parentSpec->id,
+                'name' => (string) $parentSpec->name,
+                'children' => $parentSpec->children->map(fn ($child) => [
+                    'id' => (int) $child->id,
+                    'name' => (string) $child->name,
+                    'image' => $child->image,
+                ])->values()->all(),
+            ])->values()->all(),
+            'variants' => $saleableVariants->map(fn (Variant $variant) => [
+                'id' => (int) $variant->id,
+                'spec_ids' => $variant->specs->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+                'spec_text' => $variant->product_spec_text,
+                'price' => (int) $variant->price->getAmount(),
+                'price_parts' => sn_money()->formatParts($variant->price),
+                'original_price_parts' => filled($variant->original_price) ? sn_money()->formatParts($variant->original_price) : null,
+                'stock' => $variant->stock,
+            ])->values()->all(),
+            // 附加项（加料/增值服务）：ExtraManager 统一解析（有效价/售罄标记），与下单管道同源
+            'extras' => collect(app(ExtraManager::class)->resolveProductExtras($product))->map(function (array $group) {
+                $group['options'] = collect($group['children'])->map(function (array $option) {
+                    $option['price_parts'] = sn_money()->formatParts(sn_money()->fromMinor($option['price']));
 
-        foreach ($parentSpecs as $parentSpec) {
-            foreach ($parentSpec->children as $child) {
-                // 排除该规格组自身的选择，只看其他规格组的约束
-                $constraints = collect($this->selectedSpecs)->except($parentSpec->id);
+                    return $option;
+                })->all();
+                unset($group['children']);
 
-                $match = $saleableVariants->contains(function (Variant $variant) use ($child, $constraints) {
-                    $variantSpecIds = $variant->specs->pluck('id');
-
-                    // 目标规格值在组合中，其余所选规格值也都在组合中
-                    return $variantSpecIds->contains($child->id)
-                        && $constraints->every(fn (int $specId) => $variantSpecIds->contains($specId));
-                });
-
-                $selectable[$parentSpec->id][$child->id] = $match;
-            }
-        }
-
-        return $selectable;
+                return $group;
+            })->values()->all(),
+        ];
     }
 }

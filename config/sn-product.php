@@ -56,8 +56,8 @@ return [
         'product' => Models\Product::class,
         'spec' => Models\Spec::class,
         'variant' => Models\Variant::class,
-        'attribute' => Models\Attribute::class,
-        'attribute_repository' => Models\AttributeRepository::class,
+        'extra' => Models\Extra::class,
+        'extra_item' => Models\ExtraItem::class,
         'unit_repository' => Models\UnitRepository::class,
     ],
 

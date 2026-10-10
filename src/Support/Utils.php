@@ -156,6 +156,26 @@ class Utils
     }
 
     /**
+     * Get Extra model class.
+     *
+     * @return string Models\Extra
+     */
+    public static function getExtraModel(): string
+    {
+        return self::getModel('extra');
+    }
+
+    /**
+     * Get ExtraItem model class.
+     *
+     * @return string Models\ExtraItem
+     */
+    public static function getExtraItemModel(): string
+    {
+        return self::getModel('extra_item');
+    }
+
+    /**
      * Get file directory path with optional type and date.
      *
      * @param  string|null  $type  Directory type
