@@ -66,7 +66,7 @@ return [
         'option_price' => 'Extra Price',
         'option_status' => 'Status',
         'sold_out_until' => 'Sold Out Until',
-        'sold_out_until_helper' => 'Unavailable before this time, auto-recovers afterwards; past times are not allowed (use for temporary sold-out; use status for permanent; clock icon = sold out until end of today)',
+        'sold_out_until_helper' => 'Unavailable before this time, auto-recovers afterwards; past times not allowed',
         'sold_out_today_action' => 'Sold out until end of today',
         'limit_min_num' => 'Min Quantity',
         'limit_max_num' => 'Max Quantity',

@@ -66,7 +66,7 @@ return [
         'option_price' => '加价（元）',
         'option_status' => '状态',
         'sold_out_until' => '售罄至',
-        'sold_out_until_helper' => '该时间点之前置灰不可选，过后自动恢复；不能选择当前时间之前（临时售罄用此项，永久停卖用状态；时钟图标一键售罄至当天结束）',
+        'sold_out_until_helper' => '该时间前不可选，过后自动恢复；不可选过去时间',
         'sold_out_today_action' => '一键售罄至当天结束',
         'limit_min_num' => '起购数量',
         'limit_max_num' => '最多数量',
