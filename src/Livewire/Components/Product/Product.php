@@ -53,7 +53,9 @@ class Product extends Base
 
         // 轮播图：主图在前，轮播图在后
         $slides = [];
+        $mainImageUrl = null;
         if ($mainUrl = $product->getFirstMediaUrl('product_image')) {
+            $mainImageUrl = $mainUrl;
             $slides[] = ['image' => $mainUrl];
         }
         foreach ($product->getMedia('product_images') as $media) {
@@ -65,6 +67,8 @@ class Product extends Base
             'parentSpecs' => $parentSpecs,
             'specSchema' => $specSchema,
             'initialPriceParts' => $initialPriceParts,
+            'initialPriceMinor' => (int) ($initialVariant?->price ?? $product->price)->getAmount(),
+            'mainImageUrl' => $mainImageUrl,
             'slides' => $slides,
         ]);
     }
@@ -166,7 +170,7 @@ class Product extends Base
      *     schema_version: int,
      *     spec_type: string,
      *     specs: list<array{id: int, name: string, children: list<array{id: int, name: string, image: ?string}>}>,
-     *     variants: list<array{id: int, spec_ids: list<int>, spec_text: list<string>, price: int, price_parts: array{symbol: string, amount: string}, original_price_parts: ?array{symbol: string, amount: string}, stock: ?int}>,
+     *     variants: list<array{id: int, spec_ids: list<int>, spec_text: list<string>, price: int, price_parts: array{symbol: string, amount: string}, original_price_parts: ?array{symbol: string, amount: string}, image: ?string, stock: ?int}>,
      *     addons: list<mixed>
      * }
      */
@@ -181,7 +185,7 @@ class Product extends Base
                 'children' => $parentSpec->children->map(fn ($child) => [
                     'id' => (int) $child->id,
                     'name' => (string) $child->name,
-                    'image' => $child->image,
+                    'image' => $child->image ?: null,
                 ])->values()->all(),
             ])->values()->all(),
             'variants' => $saleableVariants->map(fn (Variant $variant) => [
@@ -191,7 +195,10 @@ class Product extends Base
                 'price' => (int) $variant->price->getAmount(),
                 'price_parts' => sn_money()->formatParts($variant->price),
                 'original_price_parts' => filled($variant->original_price) ? sn_money()->formatParts($variant->original_price) : null,
-                'stock' => $variant->stock,
+                // 组合图：变体覆盖图优先（后台可精确指定），未指定由前端按「首个带图规格组选中值」推导
+                'image' => $variant->image ?: null,
+                // 非库存型商品不限量：stock 输出 null（前端低库存提示只对库存型生效）
+                'stock' => $product->stock_type === ProductStockType::Stock ? $variant->stock : null,
             ])->values()->all(),
             // 附加项（加料/增值服务）：ExtraManager 统一解析（有效价/售罄标记），与下单管道同源
             'extras' => collect(app(ExtraManager::class)->resolveProductExtras($product))->map(function (array $group) {

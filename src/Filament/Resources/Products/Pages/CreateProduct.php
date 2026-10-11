@@ -6,6 +6,7 @@ use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 use Wsmallnews\Product\Enums\ProductStatus;
 use Wsmallnews\Product\Filament\Resources\Products\ProductResource;
+use Wsmallnews\Product\Support\ExtraItemService;
 use Wsmallnews\Product\Support\ProductSpecService;
 use Wsmallnews\Support\Filament\Resources\Concerns\Pages\Scopeable;
 
@@ -38,12 +39,12 @@ class CreateProduct extends CreateRecord
         }
 
         // 详情内容存 morphOne 关联表（sn_contents），由表单的 contentTypeGroup 自动保存
-        // 规格 / 变体数据不属于主表，由 afterCreate 统一保存
-        return ProductSpecService::strip(parent::mutateFormDataBeforeCreate($data));
+        // 规格 / 变体 / 附加项数据不属于主表，由 afterCreate 统一保存
+        return ExtraItemService::strip(ProductSpecService::strip(parent::mutateFormDataBeforeCreate($data)));
     }
 
     /**
-     * 创建产品后，保存规格变体（钩子由 CreateRecord::create 触发）。
+     * 创建产品后，保存规格变体与附加项挂载（钩子由 CreateRecord::create 触发）。
      */
     protected function afterCreate(): void
     {
@@ -52,5 +53,6 @@ class CreateProduct extends CreateRecord
         $state = $this->form->getRawState();
 
         ProductSpecService::save($this->getRecord(), $state);
+        ExtraItemService::save($this->getRecord(), $state);
     }
 }

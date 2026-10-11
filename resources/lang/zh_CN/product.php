@@ -66,7 +66,7 @@ return [
         'option_price' => '加价（元）',
         'option_status' => '状态',
         'sold_out_until' => '售罄至',
-        'sold_out_until_helper' => '该时间前不可选，过后自动恢复；不可选过去时间',
+        'sold_out_until_helper' => '售罄至该时间点，到点自动恢复；留空为在售',
         'sold_out_today_action' => '一键售罄至当天结束',
         'limit_min_num' => '起购数量',
         'limit_max_num' => '最多数量',
@@ -96,9 +96,9 @@ return [
         'extra_price_override' => '覆盖价（元）',
         'extra_price_override_helper' => '留空跟随库价（库里改价即同步）；填写则此商品固定价格',
         'extra_add' => '添加附加项',
-
-
-
+        'extra_add_group' => '添加附加项组',
+        'extra_add_option' => '添加选项',
+        'extra_options' => '组内选项',
     ],
 
     'components' => [
@@ -110,6 +110,13 @@ return [
         'buy_now' => '立即购买',
         'product_params' => '参数信息',
         'product_content' => '图文详情',
+        'selected' => '已选',
+        'please_select' => '请选择规格',
+        'spec_mode_list' => '列表形态',
+        'spec_mode_grid' => '大图形态',
+        'remaining_stock' => '仅剩 :num 件',
+        'extra_single' => '单选',
+        'extra_multi' => '可多份',
         'extra_sold_out' => '已售罄',
         'extras_total' => '附加项合计',
     ],

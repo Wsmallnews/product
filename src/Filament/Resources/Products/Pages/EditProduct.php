@@ -8,6 +8,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\EditRecord;
 use Wsmallnews\Product\Enums\ProductStatus;
 use Wsmallnews\Product\Filament\Resources\Products\ProductResource;
+use Wsmallnews\Product\Support\ExtraItemService;
 use Wsmallnews\Product\Support\ProductSpecService;
 use Wsmallnews\Support\Filament\Resources\Concerns\Pages\Scopeable;
 
@@ -27,15 +28,20 @@ class EditProduct extends EditRecord
     }
 
     /**
-     * 回填表单时，从产品记录构建规格 / 变体编辑器 state
-     * （详情内容由表单的 contentTypeGroup 通过 content 关联自动回填）。
+     * 回填表单时，从产品记录构建规格 / 变体 / 附加项编辑器 state
+     * （详情内容由表单的 contentTypeGroup 通过 content 关联自动回填；
+     * 附加项为双层结构：挂载行按组聚合回填）。
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        return array_merge($data, ProductSpecService::toFormState($this->getRecord()));
+        return array_merge(
+            $data,
+            ProductSpecService::toFormState($this->getRecord()),
+            ExtraItemService::toFormState($this->getRecord()),
+        );
     }
 
     /**
@@ -51,11 +57,11 @@ class EditProduct extends EditRecord
         }
 
         // 详情内容存 morphOne 关联表（sn_contents），由表单的 contentTypeGroup 自动保存
-        return ProductSpecService::strip($data);
+        return ExtraItemService::strip(ProductSpecService::strip($data));
     }
 
     /**
-     * 保存产品后，全量替换规格树与变体列表（钩子由 EditRecord::save 触发）。
+     * 保存产品后，全量替换规格树 / 变体列表 / 附加项挂载（钩子由 EditRecord::save 触发）。
      */
     protected function afterSave(): void
     {
@@ -64,5 +70,6 @@ class EditProduct extends EditRecord
         $state = $this->form->getRawState();
 
         ProductSpecService::save($this->getRecord(), $state);
+        ExtraItemService::save($this->getRecord(), $state);
     }
 }

@@ -12,15 +12,19 @@
  * 附加项同样本地选择/计价（售罄置灰不可选）；服务端 buy()/下单管道始终按 DB 重新校验，
  * 本地展示态不作信任来源。
  */
-export default function productBuy({ schema, initialPriceParts = null, currencySymbol = '¥' }) {
+export default function productBuy({ schema, initialPriceParts = null, initialPriceMinor = 0, mainImageUrl = null, currencySymbol = '¥', langRemainingStock = '仅剩 :num 件' }) {
     return {
         schema,
         selected: {},          // parentId => childId（规格）
         selectedExtras: {},    // extraGroupId => optionId[]（附加项）
         extraNums: {},         // optionId => num（数量型附加项）
+        specModes: {},         // parentId => 'list' | 'grid'（带图规格组形态，默认 list；无图组恒胶囊）
         productNum: 1,
         initialPriceParts,
+        initialPriceMinor,
+        mainImageUrl,
         currencySymbol,
+        langRemainingStock,
 
         init() {
             // 默认选中的附加项（is_default 且未售罄）
@@ -53,6 +57,17 @@ export default function productBuy({ schema, initialPriceParts = null, currencyS
 
         isSelected(parentId, childId) {
             return this.selected[parentId] === childId;
+        },
+
+        /**
+         * 带图规格组的展示形态（list / grid）
+         */
+        specMode(parentId) {
+            return this.specModes[parentId] || 'list';
+        },
+
+        setSpecMode(parentId, mode) {
+            this.specModes[parentId] = mode;
         },
 
         /**
@@ -101,6 +116,79 @@ export default function productBuy({ schema, initialPriceParts = null, currencyS
          */
         get priceParts() {
             return this.matchedVariant?.price_parts ?? this.initialPriceParts;
+        },
+
+        /**
+         * 规格值在该值下的最低变体价（列表形态卡片展示用）：无图组不展示价差，返回 null
+         */
+        childMinPriceParts(childId) {
+            const prices = this.schema.variants
+                .filter((variant) => variant.spec_ids.includes(childId))
+                .map((variant) => variant.price);
+
+            return prices.length ? this.currencySymbol + (Math.min(...prices) / 100).toFixed(2) : null;
+        },
+
+        /**
+         * 组合图自动推导：变体覆盖图 > 首个带图规格组当前选中值图 > 商品主图
+         */
+        get variantImage() {
+            if (this.matchedVariant?.image) {
+                return this.matchedVariant.image;
+            }
+
+            const imageGroup = (this.schema.specs || []).find((group) => group.children.some((child) => child.image));
+            if (imageGroup && this.selected[imageGroup.id]) {
+                const child = imageGroup.children.find((c) => c.id === this.selected[imageGroup.id]);
+
+                if (child?.image) {
+                    return child.image;
+                }
+            }
+
+            return this.mainImageUrl;
+        },
+
+        /**
+         * 已选规格回显串：全部选完 = 变体 spec_text；部分选择 = 已选组值名拼接；未选 = 空串
+         */
+        get selectedSpecText() {
+            if (this.matchedVariant) {
+                return this.matchedVariant.spec_text?.join(' / ');
+            }
+
+            return (this.schema.specs || [])
+                .filter((group) => this.selected[group.id])
+                .map((group) => group.children.find((child) => child.id === this.selected[group.id])?.name)
+                .filter(Boolean)
+                .join(' / ');
+        },
+
+        /**
+         * 低库存提示（仅库存型且 ≤3 件）：null = 不展示
+         */
+        get stockHint() {
+            const stock = this.matchedVariant?.stock;
+
+            return (stock !== null && stock !== undefined && stock <= 3) ? stock : null;
+        },
+
+        /**
+         * 低库存提示串（翻译模板由服务端传入，:num 占位）
+         */
+        get remainingStockText() {
+            return this.stockHint === null ? '' : this.langRemainingStock.replace(':num', this.stockHint);
+        },
+
+        /**
+         * 结算合计（分）：变体价（未命中回退初始价）+ 附加项，× 数量
+         */
+        get totalMinor() {
+            return ((this.matchedVariant?.price ?? this.initialPriceMinor) + this.extrasTotalMinor) * this.productNum;
+        },
+
+        get totalText() {
+            return this.currencySymbol + (this.totalMinor / 100).toFixed(2);
         },
 
         // ========================= 附加项（加料/增值服务） =========================
@@ -168,6 +256,29 @@ export default function productBuy({ schema, initialPriceParts = null, currencyS
          */
         get extrasTotalText() {
             return this.currencySymbol + (this.extrasTotalMinor / 100).toFixed(2);
+        },
+
+        /**
+         * 附加项摘要串（珍珠×2 · 奶盖）：数量型带份数，单份只名称
+         */
+        get extrasText() {
+            const parts = [];
+
+            Object.entries(this.selectedExtras).forEach(([groupId, optionIds]) => {
+                const group = this.extraGroup(Number(groupId));
+
+                optionIds.forEach((optionId) => {
+                    const option = this.extraOption(Number(groupId), optionId);
+                    if (!option) {
+                        return;
+                    }
+
+                    const num = group?.is_num ? (this.extraNums[optionId] ?? 1) : 1;
+                    parts.push(num > 1 ? `${option.name}×${num}` : option.name);
+                });
+            });
+
+            return parts.join(' · ');
         },
 
         /**

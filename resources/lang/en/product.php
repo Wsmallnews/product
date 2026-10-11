@@ -66,7 +66,7 @@ return [
         'option_price' => 'Extra Price',
         'option_status' => 'Status',
         'sold_out_until' => 'Sold Out Until',
-        'sold_out_until_helper' => 'Unavailable before this time, auto-recovers afterwards; past times not allowed',
+        'sold_out_until_helper' => 'Sold out until this time, auto-recovers when reached; empty = on sale',
         'sold_out_today_action' => 'Sold out until end of today',
         'limit_min_num' => 'Min Quantity',
         'limit_max_num' => 'Max Quantity',
@@ -96,9 +96,9 @@ return [
         'extra_price_override' => 'Price Override',
         'extra_price_override_helper' => 'Empty = follow library price (library changes sync); set = fixed price for this product',
         'extra_add' => 'Add Extra',
-
-
-
+        'extra_add_group' => 'Add Extra Group',
+        'extra_add_option' => 'Add Option',
+        'extra_options' => 'Options',
     ],
 
     'components' => [
@@ -110,6 +110,13 @@ return [
         'buy_now' => 'Buy Now',
         'product_params' => 'Parameters',
         'product_content' => 'Details',
+        'selected' => 'Selected',
+        'please_select' => 'Select options',
+        'spec_mode_list' => 'List view',
+        'spec_mode_grid' => 'Grid view',
+        'remaining_stock' => 'Only :num left',
+        'extra_single' => 'Single',
+        'extra_multi' => 'Multiple',
         'extra_sold_out' => 'Sold Out',
         'extras_total' => 'Extras Total',
     ],

@@ -36,7 +36,10 @@
             x-data="productBuy({
                 schema: @js($specSchema),
                 initialPriceParts: @js($initialPriceParts),
+                initialPriceMinor: @js($initialPriceMinor),
+                mainImageUrl: @js($mainImageUrl),
                 currencySymbol: @js($initialPriceParts['symbol'] ?? '¥'),
+                langRemainingStock: @js(__('sn-product::product.components.remaining_stock', ['num' => ':num'])),
             })"
         >
             <div class="flex flex-col gap-y-1">
@@ -52,90 +55,237 @@
                 <span class="text-2xl leading-none" x-text="priceParts?.amount">{{ $initialPriceParts['amount'] }}</span>
             </span>
 
-            {{-- 规格选择：单规格无规格组；不可选规格值置灰禁用（本地计算，零请求） --}}
+            {{-- 规格选择：单规格无规格组；组内任一规格值有图 → 列表形态（紧凑流式卡片），无图 → 胶囊；
+                长名超整行才截断、选中展开；不可选置灰禁用（本地计算，零请求） --}}
             @if ($parentSpecs->isNotEmpty())
                 @foreach ($parentSpecs as $parentSpec)
+                    @php
+                        $groupHasImage = $parentSpec->children->contains(fn ($child) => filled($child->image));
+                    @endphp
                     <div class="flex flex-col gap-2">
-                        <div class="sn-content-text">{{ $parentSpec->name }}</div>
-                        <div class="flex flex-wrap gap-2">
-                            @foreach ($parentSpec->children as $child)
-                                <button
-                                    type="button"
-                                    class="sn-badge sn-badge-lg cursor-pointer transition"
-                                    :class="{
-                                        'sn-badge-solid-primary': isSelected({{ $parentSpec->id }}, {{ $child->id }}),
-                                        'opacity-40 cursor-not-allowed': ! isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }}),
-                                        'hover:opacity-80': isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }}),
-                                    }"
-                                    :disabled="! isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }})"
-                                    @click="toggleSpec({{ $parentSpec->id }}, {{ $child->id }})"
-                                >
-                                    {{ $child->name }}
-                                </button>
-                            @endforeach
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-baseline gap-1.5">
+                                <div class="sn-content-text">{{ $parentSpec->name }}</div>
+                                <span class="text-xs text-gray-400">{{ $parentSpec->children->count() }}</span>
+                            </div>
+
+                            @if ($groupHasImage)
+                                {{-- 带图规格组：列表 / 大图形态切换（淘宝同款入口；无图组恒胶囊不参与切换） --}}
+                                <div class="flex items-center gap-0.5 rounded-full bg-gray-100 p-0.5 dark:bg-gray-800">
+                                    <button
+                                        type="button"
+                                        class="grid size-6 cursor-pointer place-items-center rounded-full text-gray-400 transition hover:text-gray-600 dark:hover:text-gray-300"
+                                        :class="specMode({{ $parentSpec->id }}) === 'list' ? 'bg-white text-primary-600 shadow-sm dark:text-primary-400' : ''"
+                                        title="{{ __('sn-product::product.components.spec_mode_list') }}"
+                                        @click="setSpecMode({{ $parentSpec->id }}, 'list')"
+                                    >
+                                        <x-filament::icon :icon="Heroicon::OutlinedBars3" class="size-3.5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="grid size-6 cursor-pointer place-items-center rounded-full text-gray-400 transition hover:text-gray-600 dark:hover:text-gray-300"
+                                        :class="specMode({{ $parentSpec->id }}) === 'grid' ? 'bg-white text-primary-600 shadow-sm dark:text-primary-400' : ''"
+                                        title="{{ __('sn-product::product.components.spec_mode_grid') }}"
+                                        @click="setSpecMode({{ $parentSpec->id }}, 'grid')"
+                                    >
+                                        <x-filament::icon :icon="Heroicon::OutlinedSquares2x2" class="size-3.5" />
+                                    </button>
+                                </div>
+                            @endif
                         </div>
+
+                        @if ($groupHasImage)
+                            {{-- 列表形态：宽度随内容流式换行；小图 + 名称 + 该值最低变体价 --}}
+                            <div class="flex flex-wrap gap-2" x-show="specMode({{ $parentSpec->id }}) === 'list'">
+                                @foreach ($parentSpec->children as $child)
+                                    <button
+                                        type="button"
+                                        class="inline-flex max-w-full items-center gap-2 rounded-(--sn-radius-control) border border-gray-200 py-1.5 pl-1.5 pr-3 text-left transition dark:border-gray-700"
+                                        :class="{
+                                            'border-primary-500 bg-primary-500/10 dark:border-primary-400': isSelected({{ $parentSpec->id }}, {{ $child->id }}),
+                                            'hover:border-gray-300 dark:hover:border-gray-600': ! isSelected({{ $parentSpec->id }}, {{ $child->id }}) && isSelectable({{ $parentSpec->id }}, {{ $child->id }}),
+                                            'opacity-40 cursor-not-allowed': ! isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }}),
+                                        }"
+                                        :disabled="! isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }})"
+                                        title="{{ $child->name }}"
+                                        @click="toggleSpec({{ $parentSpec->id }}, {{ $child->id }})"
+                                    >
+                                        @if (filled($child->image))
+                                            <img src="{{ $child->image }}" alt="{{ $child->name }}" class="size-10 shrink-0 rounded-(--sn-radius-control) object-cover">
+                                        @else
+                                            <span class="grid size-10 shrink-0 place-items-center rounded-(--sn-radius-control) sn-media-bg">
+                                                <x-filament::icon :icon="Heroicon::OutlinedPhoto" class="size-4 text-gray-400" aria-hidden="true" />
+                                            </span>
+                                        @endif
+                                        <span class="flex min-w-0 flex-col items-start">
+                                            <span class="max-w-full text-sm font-medium leading-5"
+                                                :class="isSelected({{ $parentSpec->id }}, {{ $child->id }}) ? 'whitespace-normal text-primary-600 dark:text-primary-400' : 'truncate'"
+                                            >{{ $child->name }}</span>
+                                            <span class="text-[11px] leading-4 text-primary-600 dark:text-primary-400"
+                                                x-text="childMinPriceParts({{ $child->id }})"></span>
+                                        </span>
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            {{-- 大图形态：auto-fill 自适应网格（卡宽钳 ~120-160px，列数随容器），图上角标选中 --}}
+                            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(120px,100%),1fr))] gap-2" x-show="specMode({{ $parentSpec->id }}) === 'grid'" x-cloak>
+                                @foreach ($parentSpec->children as $child)
+                                    <button
+                                        type="button"
+                                        class="rounded-(--sn-radius-control) border border-gray-200 p-1 text-left transition dark:border-gray-700"
+                                        :class="{
+                                            'border-primary-500 bg-primary-500/10 dark:border-primary-400': isSelected({{ $parentSpec->id }}, {{ $child->id }}),
+                                            'hover:border-gray-300 dark:hover:border-gray-600': ! isSelected({{ $parentSpec->id }}, {{ $child->id }}) && isSelectable({{ $parentSpec->id }}, {{ $child->id }}),
+                                            'opacity-40 cursor-not-allowed': ! isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }}),
+                                        }"
+                                        :disabled="! isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }})"
+                                        title="{{ $child->name }}"
+                                        @click="toggleSpec({{ $parentSpec->id }}, {{ $child->id }})"
+                                    >
+                                        <span class="relative block">
+                                            @if (filled($child->image))
+                                                <img src="{{ $child->image }}" alt="{{ $child->name }}" class="aspect-square w-full rounded-(--sn-radius-control) object-cover">
+                                            @else
+                                                <span class="grid aspect-square w-full place-items-center rounded-(--sn-radius-control) sn-media-bg">
+                                                    <x-filament::icon :icon="Heroicon::OutlinedPhoto" class="size-6 text-gray-400" aria-hidden="true" />
+                                                </span>
+                                            @endif
+                                            <span
+                                                x-show="isSelected({{ $parentSpec->id }}, {{ $child->id }})"
+                                                x-cloak
+                                                class="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-primary-500 text-white shadow"
+                                            >
+                                                <x-filament::icon :icon="Heroicon::Check" class="size-3" />
+                                            </span>
+                                        </span>
+                                        <span class="mt-1 block truncate text-center text-xs font-medium">{{ $child->name }}</span>
+                                        <span class="block text-center text-[11px] leading-4 text-primary-600 dark:text-primary-400"
+                                            x-text="childMinPriceParts({{ $child->id }})"></span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        @else
+                            {{-- 胶囊形态（sn-badge 体系） --}}
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($parentSpec->children as $child)
+                                    <button
+                                        type="button"
+                                        class="sn-badge sn-badge-lg sn-badge-gray max-w-full cursor-pointer text-left transition"
+                                        :class="{
+                                            'sn-badge-solid-primary': isSelected({{ $parentSpec->id }}, {{ $child->id }}),
+                                            'opacity-40 cursor-not-allowed': ! isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }}),
+                                            'hover:opacity-80': isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }}),
+                                        }"
+                                        :disabled="! isSelectable({{ $parentSpec->id }}, {{ $child->id }}) && ! isSelected({{ $parentSpec->id }}, {{ $child->id }})"
+                                        title="{{ $child->name }}"
+                                        @click="toggleSpec({{ $parentSpec->id }}, {{ $child->id }})"
+                                    >
+                                        <span class="min-w-0 max-w-full block"
+                                            :class="isSelected({{ $parentSpec->id }}, {{ $child->id }}) ? 'whitespace-normal' : 'truncate'"
+                                        >{{ $child->name }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 @endforeach
-
-                <div class="sn-tip-text" x-show="matchedVariant" x-cloak>
-                    {{ __('sn-product::product.components.current_spec') }}：<span x-text="matchedVariant?.spec_text?.join(' / ')"></span>
-                </div>
             @endif
 
-            {{-- 附加项（加料/增值服务）：本地选择/计价；售罄置灰不可选但可见 --}}
+            {{-- 附加项（加料/增值服务）：无数量组 = 规格胶囊同款；有数量组 = 行式卡片（容器 ≥400px 两列）+ 裸步进器；
+                售罄置灰不可选但可见 --}}
             @if (! empty($specSchema['extras']))
                 @foreach ($specSchema['extras'] as $extraGroup)
                     <div class="flex flex-col gap-2">
-                        <div class="sn-content-text">
-                            {{ $extraGroup['name'] }}
-                            @if ($extraGroup['is_require'])<span class="text-danger-500">*</span>@endif
+                        <div class="flex items-baseline gap-1.5">
+                            <div class="sn-content-text">
+                                {{ $extraGroup['name'] }}
+                                @if ($extraGroup['is_require'])<span class="text-danger-500">*</span>@endif
+                            </div>
+                            <span class="text-xs text-gray-400">{{ $extraGroup['is_num'] ? __('sn-product::product.components.extra_multi') : __('sn-product::product.components.extra_single') }}</span>
                             @if (filled($extraGroup['description'] ?? null))
                                 <span class="sn-descript-text ml-1">{{ $extraGroup['description'] }}</span>
                             @endif
                         </div>
-                        <div class="flex flex-wrap gap-2 items-center">
-                            @foreach ($extraGroup['options'] as $extraOption)
-                                <div class="flex items-center gap-1.5">
+
+                        @if ($extraGroup['is_num'])
+                            {{-- 有数量组：行式卡片，容器查询两列 --}}
+                            <div class="w-full @container">
+                                <div class="grid grid-cols-1 gap-2 @[400px]:grid-cols-2">
+                                    @foreach ($extraGroup['options'] as $extraOption)
+                                        <div class="flex items-center justify-between gap-2 rounded-(--sn-radius-control) border border-gray-200 px-3 py-2.5 transition dark:border-gray-700"
+                                            :class="{
+                                                'opacity-50 cursor-not-allowed': {{ $extraOption['sold_out'] ? 'true' : 'false' }},
+                                                'border-primary-400/70 bg-primary-500/10 dark:border-primary-400/50': isExtraSelected({{ $extraGroup['id'] }}, {{ $extraOption['id'] }}),
+                                            }"
+                                        >
+                                            <div class="flex min-w-0 flex-1 items-baseline gap-1.5">
+                                                <span class="truncate text-sm font-medium" title="{{ $extraOption['name'] }}">{{ $extraOption['name'] }}</span>
+                                                <span class="shrink-0 text-xs text-primary-600 dark:text-primary-400">{{ $extraOption['price_parts']['symbol'] }}{{ $extraOption['price_parts']['amount'] }}</span>
+                                                @if ($extraOption['sold_out'])
+                                                    <span class="sn-badge sn-badge-xs sn-badge-solid-gray shrink-0">{{ __('sn-product::product.components.extra_sold_out') }}</span>
+                                                @endif
+                                            </div>
+                                            @if (! $extraOption['sold_out'])
+                                                {{-- 未选：圆形加号；选中：裸步进器（min-behavior=dispatch 减到下限 = 取消选择） --}}
+                                                <button
+                                                    type="button"
+                                                    x-show="! isExtraSelected({{ $extraGroup['id'] }}, {{ $extraOption['id'] }})"
+                                                    class="grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border border-primary-500/50 text-primary-600 transition hover:bg-primary-500/10 dark:border-primary-400/50 dark:text-primary-400"
+                                                    @click="toggleExtraOption({{ $extraGroup['id'] }}, {{ $extraOption['id'] }})"
+                                                >
+                                                    <x-filament::icon :icon="Heroicon::Plus" class="size-4" />
+                                                </button>
+                                                <div x-show="isExtraSelected({{ $extraGroup['id'] }}, {{ $extraOption['id'] }})" x-cloak>
+                                                    <x-sn-support::input.step-number
+                                                        variant="bare"
+                                                        :editable="false"
+                                                        min-behavior="dispatch"
+                                                        :min="$extraOption['limit_min_num']"
+                                                        :max="$extraOption['limit_max_num'] > 0 ? $extraOption['limit_max_num'] : 99"
+                                                        button-class="grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border border-primary-500/50 text-primary-600 hover:bg-primary-500/10 disabled:opacity-40 disabled:cursor-not-allowed dark:border-primary-400/50 dark:text-primary-400"
+                                                        x-model="extraNums[{{ $extraOption['id'] }}]"
+                                                        @sn-stepper-min="toggleExtraOption({{ $extraGroup['id'] }}, {{ $extraOption['id'] }})"
+                                                    />
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            {{-- 无数量组：与规格胶囊同款（选中实底反白） --}}
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($extraGroup['options'] as $extraOption)
                                     <button
                                         type="button"
-                                        class="sn-badge sn-badge-lg cursor-pointer transition"
-                                        @class(['opacity-40 cursor-not-allowed' => $extraOption['sold_out']])
+                                        class="sn-badge sn-badge-lg sn-badge-gray max-w-full cursor-pointer text-left transition"
                                         :class="{
                                             'sn-badge-solid-primary': isExtraSelected({{ $extraGroup['id'] }}, {{ $extraOption['id'] }}),
+                                            'opacity-40 cursor-not-allowed': {{ $extraOption['sold_out'] ? 'true' : 'false' }},
                                             'hover:opacity-80': ! {{ $extraOption['sold_out'] ? 'true' : 'false' }} && ! isExtraSelected({{ $extraGroup['id'] }}, {{ $extraOption['id'] }}),
                                         }"
                                         @if ($extraOption['sold_out'])
                                             disabled
                                             title="{{ __('sn-product::product.components.extra_sold_out') }}"
+                                        @else
+                                            title="{{ $extraOption['name'] }}"
                                         @endif
                                         @click="toggleExtraOption({{ $extraGroup['id'] }}, {{ $extraOption['id'] }})"
                                     >
-                                        {{ $extraOption['name'] }}
-                                        <span class="ml-1 opacity-70">{{ $extraOption['price_parts']['amount'] }}</span>
+                                        <span class="min-w-0 max-w-full block"
+                                            :class="isExtraSelected({{ $extraGroup['id'] }}, {{ $extraOption['id'] }}) ? 'whitespace-normal' : 'truncate'"
+                                        >{{ $extraOption['name'] }}</span>
+                                        <span class="shrink-0 text-xs opacity-70">{{ $extraOption['price_parts']['amount'] }}</span>
                                         @if ($extraOption['sold_out'])
-                                            <span class="ml-1">{{ __('sn-product::product.components.extra_sold_out') }}</span>
+                                            <span class="sn-badge sn-badge-xs sn-badge-solid-gray shrink-0">{{ __('sn-product::product.components.extra_sold_out') }}</span>
                                         @endif
                                     </button>
-                                    @if ($extraGroup['is_num'])
-                                        <div class="w-28" x-show="isExtraSelected({{ $extraGroup['id'] }}, {{ $extraOption['id'] }})" x-cloak>
-                                            <x-sn-support::input.step-number
-                                                :min="$extraOption['limit_min_num']"
-                                                :max="$extraOption['limit_max_num'] > 0 ? $extraOption['limit_max_num'] : 99"
-                                                x-model="extraNums[{{ $extraOption['id'] }}]"
-                                            />
-                                        </div>
-                                    @endif
-                                </div>
-                            @endforeach
-                        </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 @endforeach
-
-                {{-- 附加项合计（选中后实时显示） --}}
-                <div class="sn-tip-text flex items-center gap-2" x-show="extrasTotalMinor > 0" x-cloak>
-                    <span>{{ __('sn-product::product.components.extras_total') }}：</span>
-                    <span class="font-semibold" x-text="extrasTotalText"></span>
-                </div>
             @endif
 
             {{-- 数量（本地状态，随 buy 请求一并提交） --}}
@@ -146,10 +296,31 @@
                 </div>
             </div>
 
-            {{-- 服务端校验后派发 sn-product-buy（防已下架/无货变体直达确认页）；本地选中态经参数传回 --}}
-            <x-filament::button @click="$wire.buy(selectedVariantId, productNum, extrasPayload)" size="xl" class="w-48">
-                {{ __('sn-product::product.components.buy_now') }}
-            </x-filament::button>
+            {{-- 底部结算条：组合图自动推导（变体覆盖图 > 带图规格组选中值 > 主图）+ 已选回显 + 合计 + 低库存提醒；
+                服务端校验后派发 sn-product-buy（防已下架/无货变体直达确认页） --}}
+            <div class="sticky bottom-0 z-10 flex items-center gap-3 rounded-(--sn-radius-card) border border-gray-200 bg-white/95 px-3 py-2.5 shadow-(--sn-shadow-card-hover) backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
+                <template x-if="variantImage">
+                    <img :src="variantImage" alt="{{ $product->title }}" class="size-12 shrink-0 rounded-(--sn-radius-control) border border-gray-200 object-cover dark:border-gray-700">
+                </template>
+                <span x-show="! variantImage" x-cloak class="grid size-12 shrink-0 place-items-center rounded-(--sn-radius-control) border border-gray-200 sn-media-bg dark:border-gray-700">
+                    <x-filament::icon :icon="Heroicon::OutlinedPhoto" class="size-6 text-gray-400" aria-hidden="true" />
+                </span>
+
+                <div class="min-w-0 flex-1">
+                    <div class="truncate text-sm">
+                        <span class="text-gray-400">{{ __('sn-product::product.components.selected') }}：</span><span class="font-medium" x-text="selectedSpecText || '{{ __('sn-product::product.components.please_select') }}'"></span>
+                    </div>
+                    <div class="mt-0.5 flex items-baseline gap-1.5">
+                        <span class="text-lg font-bold text-primary-600 dark:text-primary-400" x-text="totalText"></span>
+                        <span x-show="stockHint !== null" x-cloak class="shrink-0 text-[11px] text-warning-600 dark:text-warning-400" x-text="remainingStockText"></span>
+                        <span x-show="extrasText" x-cloak class="truncate text-[11px] text-gray-400" x-text="extrasText"></span>
+                    </div>
+                </div>
+
+                <x-filament::button @click="$wire.buy(selectedVariantId, productNum, extrasPayload)" size="xl" class="shrink-0">
+                    {{ __('sn-product::product.components.buy_now') }}
+                </x-filament::button>
+            </div>
         </div>
     </div>
 

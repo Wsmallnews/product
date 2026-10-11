@@ -9,6 +9,8 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Component;
@@ -230,94 +232,90 @@ class ProductForm
     }
 
     /**
-     * 附加项挂载（选项粒度）：从附加项库选择（按组分组展示），可指定默认选中与覆盖价；
-     * 支持行内直建库选项（组在附加项库页面维护）。
+     * 附加项挂载（双层结构：先选组，再挑组内选项）：数组状态经 ExtraItemService
+     * 拍平为选项粒度挂载行落库；选过的组兄弟行禁选；换组自动清空已挑选项。
      */
     public static function extraInfoFields(): array
     {
         return [
-            Forms\Components\Repeater::make('extraItems')
-                ->relationship('extraItems')
+            Forms\Components\Repeater::make('extra_groups')
                 ->hiddenLabel()
                 ->schema([
-                    Forms\Components\Select::make('extra_id')
-                        ->label(__('sn-product::product.product_form.extra_option'))
-                        ->options(fn (Component $livewire) => static::extraOptions($livewire))
+                    // 组选择：同组已在其他行选过则禁选
+                    Forms\Components\Select::make('group_id')
+                        ->label(__('sn-product::product.product_form.extra_group'))
+                        ->options(fn (Component $livewire) => static::extraGroupOptions($livewire))
                         ->searchable()
                         ->required()
+                        ->live()
                         ->disableOptionsWhenSelectedInSiblingRepeaterItems()
-                        ->createOptionForm([
-                            Forms\Components\Select::make('parent_id')
-                                ->label(__('sn-product::product.product_form.extra_group'))
-                                ->options(fn (Component $livewire) => static::extraGroupOptions($livewire))
-                                ->searchable()
-                                ->required(),
-                            Forms\Components\TextInput::make('name')
+                        ->afterStateUpdated(fn (Set $set) => $set('options', []))
+                        ->columnSpan(2),
+
+                    // 组内选项：默认选中 + 覆盖价；支持行内直建（自动归入当前组）
+                    Forms\Components\Repeater::make('options')
+                        ->label(__('sn-product::product.product_form.extra_options'))
+                        ->schema([
+                            Forms\Components\Select::make('extra_id')
                                 ->label(__('sn-product::product.product_form.extra_option'))
-                                ->required(),
-                            Forms\Components\TextInput::make('price')
-                                ->label(__('sn-product::product.product_form.extra_price'))
+                                ->options(function (Get $get) {
+                                    $groupId = (int) $get('../../group_id');
+
+                                    return $groupId > 0 ? static::extraOptionsOfGroup($groupId) : [];
+                                })
+                                ->searchable()
+                                ->required()
+                                ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('name')
+                                        ->label(__('sn-product::product.product_form.extra_option'))
+                                        ->required(),
+                                    Forms\Components\TextInput::make('price')
+                                        ->label(__('sn-product::product.product_form.extra_price'))
+                                        ->numeric()
+                                        ->prefix('￥')
+                                        ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/']),
+                                ])
+                                ->createOptionUsing(function (array $data, Get $get) {
+                                    $extraModel = Utils::getExtraModel();
+
+                                    // 行内直建的选项自动归入当前组
+                                    return $extraModel::create([
+                                        'parent_id' => (int) $get('../../group_id'),
+                                        'name' => $data['name'],
+                                        'price' => $data['price'] ?? 0,
+                                        'status' => \Wsmallnews\Product\Enums\ExtraStatus::Up,
+                                    ])->getKey();
+                                })
+                                ->columnSpan(2),
+
+                            Forms\Components\Toggle::make('is_default')
+                                ->label(__('sn-product::product.product_form.extra_is_default')),
+
+                            Forms\Components\TextInput::make('price_override')
+                                ->label(__('sn-product::product.product_form.extra_price_override'))
+                                ->helperText(__('sn-product::product.product_form.extra_price_override_helper'))
                                 ->numeric()
                                 ->prefix('￥')
                                 ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/']),
                         ])
-                        ->createOptionUsing(function (array $data) {
-                            $extraModel = Utils::getExtraModel();
-
-                            return $extraModel::create([
-                                'parent_id' => (int) $data['parent_id'],
-                                'name' => $data['name'],
-                                'price' => $data['price'] ?? 0,
-                                'status' => \Wsmallnews\Product\Enums\ExtraStatus::Up,
-                            ])->getKey();
-                        })
-                        ->columnSpan(2),
-
-                    Forms\Components\Toggle::make('is_default')
-                        ->label(__('sn-product::product.product_form.extra_is_default')),
-
-                    Forms\Components\TextInput::make('price_override')
-                        ->label(__('sn-product::product.product_form.extra_price_override'))
-                        ->helperText(__('sn-product::product.product_form.extra_price_override_helper'))
-                        ->numeric()
-                        ->prefix('￥')
-                        ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/']),
+                        ->defaultItems(0)
+                        ->addActionLabel(__('sn-product::product.product_form.extra_add_option'))
+                        ->reorderable()
+                        ->columns(2)
+                        ->columnSpanFull(),
                 ])
                 ->defaultItems(0)
-                ->orderColumn('order_column')
-                ->addActionLabel(__('sn-product::product.product_form.extra_add'))
-                ->itemLabel(fn (array $state): ?string => $state['extra_id'] ?? null)
+                ->addActionLabel(__('sn-product::product.product_form.extra_add_group'))
+                ->itemLabel(fn (array $state): ?string => static::extraGroupLabel($state['group_id'] ?? null))
+                ->cloneable(false)
                 ->columns(2)
                 ->columnSpanFull(),
         ];
     }
 
     /**
-     * 附加项库选项（按组分组，仅上架；含价格展示）。
-     */
-    protected static function extraOptions(Component $livewire): array
-    {
-        $extraModel = Utils::getExtraModel();
-        $groups = $extraModel::query()
-            ->where('parent_id', 0)
-            ->where('status', \Wsmallnews\Product\Enums\ExtraStatus::Up)
-            ->where($livewire::getScopeable())
-            ->with('children')
-            ->orderBy('order_column')->orderBy('id')
-            ->get();
-
-        $options = [];
-        foreach ($groups as $group) {
-            foreach ($group->children->where('status', \Wsmallnews\Product\Enums\ExtraStatus::Up) as $option) {
-                $options[$group->name][$option->id] = $option->name . '（' . sn_money()->decimal($option->price) . '）';
-            }
-        }
-
-        return $options;
-    }
-
-    /**
-     * 附加项库组（行内直建选项时选择所属组）。
+     * 附加项库组（仅上架，scope 隔离；组选择器数据源）。
      */
     protected static function extraGroupOptions(\Livewire\Component $livewire): array
     {
@@ -330,6 +328,41 @@ class ProductForm
             ->orderBy('order_column')->orderBy('id')
             ->pluck('name', 'id')
             ->all();
+    }
+
+    /**
+     * 指定组的选项（仅上架；含价格展示；组内选项选择器数据源）。
+     */
+    protected static function extraOptionsOfGroup(int $groupId): array
+    {
+        $extraModel = Utils::getExtraModel();
+        $group = $extraModel::query()->find($groupId);
+
+        if (! $group) {
+            return [];
+        }
+
+        return $group->children()
+            ->where('status', \Wsmallnews\Product\Enums\ExtraStatus::Up)
+            ->orderBy('order_column')->orderBy('id')
+            ->get()
+            ->mapWithKeys(fn ($option) => [$option->id => $option->name . '（' . sn_money()->decimal($option->price) . '）'])
+            ->all();
+    }
+
+    /**
+     * 组行折叠标签（组名；未选时 null 显示占位）。
+     */
+    protected static function extraGroupLabel(?int $groupId): ?string
+    {
+        if (blank($groupId)) {
+            return null;
+        }
+
+        $extraModel = Utils::getExtraModel();
+        $group = $extraModel::query()->find($groupId);
+
+        return $group?->name;
     }
 
     /**
