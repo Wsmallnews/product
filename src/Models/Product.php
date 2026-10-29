@@ -13,9 +13,10 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Wsmallnews\Category\Support\Utils as CategoryUtils;
+use Wsmallnews\Media\Casts\MediaCast;
+use Wsmallnews\Media\Casts\MediaCollectionCast;
+use Wsmallnews\Media\Support\MediaValue;
 use Wsmallnews\Preference\Models\Concerns\Preferenceable;
 use Wsmallnews\Preference\Models\Concerns\Preferenceable\Viewable;
 use Wsmallnews\Product\Database\Factories\ProductFactory;
@@ -29,11 +30,10 @@ use Wsmallnews\Support\Models\Concerns\HasActivityLog;
 use Wsmallnews\Support\Models\SupportModel;
 use Wsmallnews\Support\Support\Utils as SupportUtils;
 
-class Product extends SupportModel implements HasMedia, HasSnSubject
+class Product extends SupportModel implements HasSnSubject
 {
     use HasActivityLog;
     use HasFactory;
-    use InteractsWithMedia;
     use Preferenceable;
     use SoftDeletes;
     use Viewable;
@@ -51,6 +51,8 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
         'original_price' => MoneyCast::class . ':currency',
         'published_at' => 'datetime',
         'options' => 'array',
+        'image' => MediaCast::class,
+        'images' => MediaCollectionCast::class,
         'status' => ProductStatus::class,
     ];
 
@@ -94,7 +96,29 @@ class Product extends SupportModel implements HasMedia, HasSnSubject
 
     public function getSnSubjectCoverUrl(): string | HtmlString | null
     {
-        return $this->getFirstMediaUrl('product_image');
+        return $this->mainImageUrl();
+    }
+
+    /**
+     * 产品主图 URL（cast 后的 MediaValue → 直链 / 私有盘签名路由），空值时返回 null。
+     */
+    public function mainImageUrl(?int $width = null): ?string
+    {
+        return $this->image?->url($width);
+    }
+
+    /**
+     * 轮播图 URL 列表（数组序即顺序，跳过空值）。
+     *
+     * @return array<int, string>
+     */
+    public function galleryImageUrls(?int $width = null): array
+    {
+        return collect($this->images->all())
+            ->map(fn (MediaValue $value): ?string => $value->url($width))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     /**

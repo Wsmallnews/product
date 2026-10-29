@@ -51,15 +51,16 @@ class Product extends Base
         $initialVariant = $product->spec_type === ProductSpecType::Single ? $saleableVariants->first() : null;
         $initialPriceParts = sn_money()->formatParts($initialVariant?->price ?? $product->price);
 
-        // 轮播图：主图在前，轮播图在后
+        // 轮播图：主图在前，轮播图在后（media 值对象经 MediaValue 解析 URL）
         $slides = [];
-        $mainImageUrl = null;
-        if ($mainUrl = $product->getFirstMediaUrl('product_image')) {
-            $mainImageUrl = $mainUrl;
-            $slides[] = ['image' => $mainUrl];
+        $mainImageUrl = $product->mainImageUrl();
+
+        if ($mainImageUrl) {
+            $slides[] = ['image' => $mainImageUrl];
         }
-        foreach ($product->getMedia('product_images') as $media) {
-            $slides[] = ['image' => $media->getUrl()];
+
+        foreach ($product->galleryImageUrls() as $galleryUrl) {
+            $slides[] = ['image' => $galleryUrl];
         }
 
         return view('sn-product::livewire.components.product.product', [
@@ -121,7 +122,7 @@ class Product extends Base
             // 可售状态：上架 + 隐藏（隐藏 = 不列表展示，直达链接可买）
             ->whereIn('status', [ProductStatus::Up, ProductStatus::Hidden])
             ->with([
-                'media',
+                // 主图/轮播从 image / images JSON 列经 MediaValue 解析，无需预加载媒体关系
                 'content',
                 'specs.children',
                 'variants.specs',
@@ -132,7 +133,12 @@ class Product extends Base
             $query->snScope(...$this->getScopeable());
         }
 
-        return $query->findOrFail($this->id);
+        $product = $query->findOrFail($this->id);
+
+        // 详情页轮播逐张取 URL：一次 whereIn 预热（私有盘/alt 反查全部命中缓存）
+        media_resolve([$product], ['image', 'images']);
+
+        return $product;
     }
 
     /**

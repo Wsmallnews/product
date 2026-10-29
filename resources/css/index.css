@@ -1,21 +1,9 @@
 @source "../views/**/*";
+/* 规格编辑区与附加项选项区均已改用 support 包的
+   sn-support::filament.forms.repeater.cards 可选视图，
+   卡片皮肤在 support 包 resources/css/filament.css 统一维护。 */
 
-/* 规格图片上传：紧凑正方形（4.5rem），避免 FilePond 默认 dropzone 撑高 table 行 */
-.sn-spec-upload .filepond--root {
-    height: 2.5rem;
-    width: 2.5rem;
-}
-
-/* 空状态提示压缩到方块内（Filament 默认 p-3 带 !important，覆盖也需 !important） */
-.sn-spec-upload .filepond--drop-label {
-    padding: 0.125rem !important;
-    font-size: 0.65rem;
-    line-height: 1.2;
-}
-
-/* 已上传预览：正方形，避免在 repeater table 中被挤压变形 */
-.sn-spec-upload img {
-    width: 2.5rem;
-    height: 2.5rem;
-    object-fit: cover;
+/* 计数徽章（specItemLabel 输出；卡片视图 / 原生卡头通用） */
+.sn-spec-item-count {
+    @apply ms-1 inline-flex items-center rounded-full bg-gray-100 px-2 py-px text-xs font-normal tabular-nums text-gray-500 dark:bg-gray-800 dark:text-gray-400;
 }

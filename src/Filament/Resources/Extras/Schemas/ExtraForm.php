@@ -5,10 +5,10 @@ namespace Wsmallnews\Product\Filament\Resources\Extras\Schemas;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Schemas;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Livewire\Component;
 use Wsmallnews\Product\Enums\ExtraStatus;
 use Wsmallnews\Product\Enums\ExtraType;
 use Wsmallnews\Support\Filament\Forms\FormComponents;
@@ -74,64 +74,104 @@ class ExtraForm
             Forms\Components\Repeater::make('children')
                 ->relationship('children')
                 ->hiddenLabel()
-                ->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->label(__('sn-product::product.extra_form.option_name'))
-                        ->required()
-                        ->columnSpan(['lg' => 2]),
-
-                    Forms\Components\TextInput::make('price')
-                        ->label(__('sn-product::product.extra_form.option_price'))
-                        ->numeric()
-                        ->prefix('￥')
-                        ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/'])
-                        ->columnSpan(['lg' => 1]),
-
-                    Forms\Components\Select::make('status')
-                        ->label(__('sn-product::product.extra_form.option_status'))
-                        ->options(ExtraStatus::class)
-                        ->default(ExtraStatus::Up)
-                        ->columnSpan(['lg' => 1]),
-
-                    Forms\Components\DateTimePicker::make('sold_out_until')
-                        ->label(__('sn-product::product.extra_form.sold_out_until'))
-                        ->helperText(__('sn-product::product.extra_form.sold_out_until_helper'))
-                        ->seconds()
-                        ->minDate(fn () => now())
-                        ->suffixAction(
-                            Action::make('soldOutToday')
-                                ->icon(Heroicon::OutlinedClock)
-                                ->tooltip(__('sn-product::product.extra_form.sold_out_today_action'))
-                                ->action(fn (Set $set) => $set('sold_out_until', now()->endOfDay()->format('Y-m-d H:i:s')))
-                        )
-                        ->columnSpan(['lg' => 2]),
-
-                    Schemas\Components\Group::make()
-                        ->schema([
-                            Forms\Components\TextInput::make('options.limit_min_num')
-                                ->label(__('sn-product::product.extra_form.limit_min_num'))
-                                ->integer()
-                                ->minValue(1)
-                                ->columnSpan(1),
-                            Forms\Components\TextInput::make('options.limit_max_num')
-                                ->label(__('sn-product::product.extra_form.limit_max_num'))
-                                ->integer()
-                                ->minValue(0)
-                                ->helperText(__('sn-product::product.extra_form.limit_max_num_helper'))
-                                ->columnSpan(1),
-                        ])
-                        ->visible(fn (Get $get): bool => (bool) $get('../../is_num'))
-                        ->columns(2)
-                        ->columnSpan(['lg' => 2]),
-                ])
+                ->schema(fn (Component $livewire): array => static::optionRowFields((bool) data_get($livewire, 'data.is_num')))
+                ->table(fn (Component $livewire): array => static::optionTableColumns((bool) data_get($livewire, 'data.is_num')))
                 ->cloneable()
                 ->addActionLabel(__('sn-product::product.extra_form.add_option'))
                 ->orderColumn('order_column')
                 ->defaultItems(0)
                 ->minItems(1)
                 ->maxItems(30)
-                ->columns(['lg' => 6])
                 ->columnSpanFull(),
         ];
+    }
+
+    /**
+     * 选项行的 schema 字段（与表列同源，保证顺序与数量对齐）。
+     *
+     * @return array<int, \Filament\Forms\Components\Field>
+     */
+    protected static function optionRowFields(bool $withLimits): array
+    {
+        $fields = [
+            Forms\Components\TextInput::make('name')
+                ->label(__('sn-product::product.extra_form.option_name'))
+                ->required(),
+
+            Forms\Components\TextInput::make('price')
+                ->label(__('sn-product::product.extra_form.option_price'))
+                ->helperText(__('sn-product::product.extra_form.option_price_helper'))
+                ->numeric()
+                ->prefix('￥')
+                ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/']),
+
+            Forms\Components\Select::make('status')
+                ->label(__('sn-product::product.extra_form.option_status'))
+                ->options(ExtraStatus::class)
+                ->default(ExtraStatus::Up),
+
+            Forms\Components\DateTimePicker::make('sold_out_until')
+                ->label(__('sn-product::product.extra_form.sold_out_until'))
+                ->helperText(__('sn-product::product.extra_form.sold_out_until_helper'))
+                ->seconds()
+                ->minDate(fn () => now())
+                ->suffixAction(
+                    Action::make('soldOutToday')
+                        ->icon(Heroicon::OutlinedClock)
+                        ->tooltip(__('sn-product::product.extra_form.sold_out_today_action'))
+                        ->action(fn (Set $set) => $set('sold_out_until', now()->endOfDay()->format('Y-m-d H:i:s')))
+                ),
+        ];
+
+        if ($withLimits) {
+            // 数量上下限各占一列；留空即不限（服务端归一：min → 1，max → 不校验）
+            $fields[] = Forms\Components\TextInput::make('options.limit_min_num')
+                ->label(__('sn-product::product.extra_form.limit_min_num'))
+                ->helperText(__('sn-product::product.extra_form.limit_min_num_helper'))
+                ->integer()
+                ->minValue(1);
+
+            $fields[] = Forms\Components\TextInput::make('options.limit_max_num')
+                ->label(__('sn-product::product.extra_form.limit_max_num'))
+                ->helperText(__('sn-product::product.extra_form.limit_max_num_helper'))
+                ->integer()
+                ->minValue(1);
+        }
+
+        return $fields;
+    }
+
+    /**
+     * 选项表的表列（与 schema 字段同源，保证顺序与数量对齐）。
+     *
+     * @return array<int, \Filament\Forms\Components\Repeater\TableColumn>
+     */
+    protected static function optionTableColumns(bool $withLimits): array
+    {
+        $columns = [
+            Forms\Components\Repeater\TableColumn::make(__('sn-product::product.extra_form.option_name')),
+            FormComponents::hintedTableColumn(
+                __('sn-product::product.extra_form.option_price'),
+                __('sn-product::product.extra_form.option_price_helper'),
+            )->width('8rem'),
+            Forms\Components\Repeater\TableColumn::make(__('sn-product::product.extra_form.option_status'))->width('9rem'),
+            FormComponents::hintedTableColumn(
+                __('sn-product::product.extra_form.sold_out_until'),
+                __('sn-product::product.extra_form.sold_out_until_helper'),
+            )->width('13rem'),
+        ];
+
+        if ($withLimits) {
+            $columns[] = FormComponents::hintedTableColumn(
+                __('sn-product::product.extra_form.limit_min_num'),
+                __('sn-product::product.extra_form.limit_min_num_helper'),
+            )->width('9rem');
+            $columns[] = FormComponents::hintedTableColumn(
+                __('sn-product::product.extra_form.limit_max_num'),
+                __('sn-product::product.extra_form.limit_max_num_helper'),
+            )->width('9rem');
+        }
+
+        return $columns;
     }
 }

@@ -38,13 +38,16 @@ class Products extends Base
     public function render()
     {
         // 内容型排序：order_column desc（新 = 大），与后台默认排序一致
+        // 主图从 image JSON 列经 MediaValue 解析（mainImageUrl），无需预加载媒体关系
         $query = Utils::getProductModel()::snScope(...$this->getScopeable())
             ->up()
-            ->with('media')
             ->orderBy('order_column', 'desc')
             ->orderBy('id', 'desc');
 
         $this->products = $this->withPagination($query, $this->getFingerprint());
+
+        // 列表循环读主图：一次 whereIn 预热 path → media 缓存，渲染期零反查
+        media_resolve($this->products, ['image']);
 
         return view('sn-product::livewire.components.product.products', [
             'paginatorLink' => $this->links,

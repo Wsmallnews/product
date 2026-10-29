@@ -5,7 +5,6 @@ namespace Wsmallnews\Product\Filament\Resources\Products\Schemas;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
@@ -16,12 +15,15 @@ use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Wsmallnews\Media\Filament\Forms\MediaPicker;
 use Wsmallnews\Product\Enums\ProductSpecType;
 use Wsmallnews\Product\Enums\ProductStockType;
 use Wsmallnews\Product\Models\Spec;
-use Wsmallnews\Support\Filament\Forms\FormComponents;
+use Wsmallnews\Product\Support\Utils;
+use Wsmallnews\Support\Filament\Forms\FormComponents as SupportFormComponents;
 
 /**
  * 产品规格共享表单编辑器。
@@ -125,8 +127,12 @@ class ProductSpecForm
      */
     public static function specsRepeater(): Repeater
     {
-        return Repeater::make('specs')
+        return SupportFormComponents::cardsRepeater('specs', 'name')
             ->label(fn (Component $livewire): string => static::isSpecMainMultiple($livewire) ? '主规格项' : '规格项')
+            ->hint(fn (Component $livewire): ?string => static::isSpecMainMultiple($livewire)
+                ? '主规格的规格值上设置的属性，将应用到所有含该规格值的组合'
+                : null)
+            ->hintColor('warning')
             ->default([])
             ->schema([
                 // 数据库记录 id：保存 diff 的匹配键（新项无 id → 新增记录）
@@ -138,20 +144,11 @@ class ProductSpecForm
                     ->live(onBlur: true)
                     ->default(fn (Component $livewire): ?string => static::isSpecUnit($livewire) ? Spec::UNIT_NAME : null)
                     ->formatStateUsing(fn (Component $livewire, ?string $state): ?string => static::isSpecUnit($livewire) ? Spec::UNIT_NAME : $state)
-                    ->disabled(fn (Component $livewire): bool => static::isSpecUnit($livewire))
-                    ->helperText(fn (Component $livewire): ?string => match (true) {
-                        static::isSpecUnit($livewire) => '多单位模式下规格名固定为「单位」',
-                        static::isSpecMainMultiple($livewire) => '主规格的规格值上设置的属性，将应用到所有含该规格值的组合',
-                        default => null,
-                    })
-                    ->columnSpan(1),
-                static::specValuesRepeater(withAttributes: true)
-                    ->columnSpanFull(),
+                    ->disabled(fn (Component $livewire): bool => static::isSpecUnit($livewire)),
+                static::specValuesRepeater(withAttributes: true),
             ])
-            ->columns(2)
-            ->itemLabel(fn (Component $livewire, array $state): string => static::isSpecUnit($livewire)
-                ? Spec::UNIT_NAME
-                : ($state['name'] ?? '未命名规格'))
+            ->itemLabel(fn (Component $livewire, array $state): HtmlString => static::specItemLabel($livewire, $state))
+            ->collapsible()
             ->addActionLabel(fn (Component $livewire): string => static::isSpecMainMultiple($livewire) ? '设置主规格' : '添加规格项')
             ->maxItems(fn (Component $livewire): ?int => static::isSpecOf($livewire, ProductSpecType::Unit, ProductSpecType::MainMultiple) ? 1 : null)
             ->afterStateUpdated(static::recomputeCallback(0))
@@ -165,7 +162,7 @@ class ProductSpecForm
      */
     protected static function extraSpecsRepeater(): Repeater
     {
-        return Repeater::make('extra_specs')
+        return SupportFormComponents::cardsRepeater('extra_specs', 'name')
             ->label('附加规格项')
             ->default([])
             ->schema([
@@ -174,23 +171,35 @@ class ProductSpecForm
                     ->label('规格名')
                     ->placeholder('如：颜色、尺码')
                     ->required()
-                    ->live(onBlur: true)
-                    ->columnSpan(1),
-                static::specValuesRepeater(withAttributes: false)
-                    ->columnSpanFull(),
+                    ->live(onBlur: true),
+                static::specValuesRepeater(withAttributes: false),
             ])
-            ->columns(2)
-            ->itemLabel(fn (array $state): string => $state['name'] ?? '未命名规格')
+            ->itemLabel(fn (Component $livewire, array $state): HtmlString => static::specItemLabel($livewire, $state))
+            ->collapsible()
             ->addActionLabel('添加附加规格项')
             ->visible(fn (Component $livewire): bool => static::isSpecMainMultiple($livewire))
             ->afterStateUpdated(static::recomputeCallback(0))
             ->columnSpanFull();
     }
 
+        /**
+     * 规格项卡头标签：规格值计数徽章（规格名本身由 headerField inline 渲染在卡头）。
+     */
+    protected static function specItemLabel(Component $livewire, array $state): HtmlString
+    {
+        $count = count($state['children'] ?? []);
+
+        return new HtmlString('<span class="sn-spec-item-count">' . $count . ' 个规格值</span>');
+    }
+
+
     /**
-     * 子规格 repeater（table 模式）：名称 + 图片，主规格值额外携带变体属性。
+     * 子规格 repeater（原生 table 模式）：名称 + 图片，主规格值额外携带变体属性。
      *
-     * 字段与表列由列定义（specValueColumns）动态生成，支持「列设置」隐藏可选列。
+     * 容器 ≥36rem 为表格（表头一行、单元格内字段免 label），
+     * 之下自动降级为卡片形态（字段自带 label）——两态均为原生行为。
+     * 字段与表列由列定义（specValueColumns）同源生成，保证顺序与数量对齐，
+     * 支持「列设置」隐藏可选列。
      *
      * @param  bool  $withAttributes  规格值是否携带变体属性（主多规格的主规格项）
      */
@@ -200,7 +209,6 @@ class ProductSpecForm
 
         return Repeater::make('children')
             ->label('规格值')
-            ->hiddenLabel()
             ->default([])
             ->schema(fn (Component $livewire): array => [
                 // 数据库记录 id：保存 diff 的匹配键（新项无 id → 新增记录）
@@ -224,7 +232,7 @@ class ProductSpecForm
     }
 
     /**
-     * 规格组合编辑器（Multiple / MainMultiple / Unit 共用，table 模式）。
+     * 规格组合编辑器（原生 table 模式；Multiple / MainMultiple / Unit 共用）。
      *
      * 行由规格项自动生成（不可手动增删排序）；规格列以纯文本展示
      * （TextEntry 不脱水，保存时由 ProductSpecService 从 spec_names 重建）；
@@ -298,7 +306,7 @@ class ProductSpecForm
             'image' => [
                 'label' => '图片',
                 'width' => '6rem',
-                'field' => fn (): FileUpload => static::imageUploadField()
+                'field' => fn (): MediaPicker => static::imageUploadField()
                     ->afterStateUpdated(static::recomputeCallback(4)),
             ],
             'price' => [
@@ -347,11 +355,9 @@ class ProductSpecForm
                 'field' => fn (): TextEntry => TextEntry::make('product_spec_text')
                     ->hiddenLabel(),
             ],
-            'image' => [
-                'label' => '图片',
-                'width' => '6rem',
-                'field' => fn (): FileUpload => static::imageUploadField(),
-            ],
+            // 组合图不再单独上传：保存时由「主规格值图 ?? 第一个有图的规格值图」推导
+            // （见 computeVariants 的 $fallbackImage 与 ProductSpecService::normalizeImage）。
+            // variants.image 列保留——订单快照读的是这个字段，来源变化不影响快照链路。
             'product_sn' => [
                 'label' => '货号',
                 'toggleable' => true,
@@ -560,6 +566,20 @@ class ProductSpecForm
             $combos = $next;
         }
 
+        // 组合图兜底来源：任取第一个带图的规格值（主规格值没图时用它）。
+        // T10 定稿：组合图不再单独上传，推导链 = 主规格值图 ?? 第一个有图的规格值图 ?? null。
+        $fallbackImage = null;
+
+        foreach ($groups as $children) {
+            foreach ($children as $child) {
+                if (filled($child['image'] ?? null)) {
+                    $fallbackImage = $child['image'];
+
+                    break 2;
+                }
+            }
+        }
+
         // 以 id 优先的组合指纹索引当前组合，保留已填的值、记录 id 与 item key
         // （item key 稳定是 Livewire DOM diff 正确移动行 / 复用行内输入的前提，
         // 重排或改名后 UI 顺序与值才能即时刷新，仅有新组合使用新 uuid）
@@ -596,7 +616,7 @@ class ProductSpecForm
                 'spec_ids' => $ids,
                 'spec_names' => $names,
                 'product_spec_text' => implode(',', $names),
-                'image' => $from['image'] ?? null,
+                'image' => $from['image'] ?? $fallbackImage,
                 'product_sn' => $from['product_sn'] ?? null,
                 'price' => $from['price'] ?? null,
                 'stock' => $from['stock'] ?? 0,
@@ -766,14 +786,21 @@ class ProductSpecForm
     // ========================= 共享字段 =========================
 
     /**
-     * 规格图片上传（正方形预览，样式见 sn-product css 的 .sn-spec-upload）。
+     * 规格值图片：素材库选择器，小号正方形触发器（仅 + 号，表格内联）。
+     *
+     * storePath()：列是 string（路径直存），值对象只在弹窗/预览里用——
+     * 这样 specSchema、组合图推导、订单快照都不用改存储契约。
      */
-    protected static function imageUploadField(): FileUpload
+    protected static function imageUploadField(): MediaPicker
     {
-        return FormComponents::plainImageUpload('image')
+        return MediaPicker::make('image')
             ->label('图片')
-            ->imagePreviewHeight('4.5rem')
-            ->extraAttributes(['class' => 'sn-spec-upload'])
+            ->directory(Utils::getFileDirectory('products/specs'))
+            ->acceptImages()
+            ->ratio(1)
+            ->storePath()
+            ->triggerSize(64)
+            ->previewInfo(false)
             ->live();
     }
 

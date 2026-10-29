@@ -24,8 +24,8 @@
                     @endif
 
                     <div class="w-full relative pb-[100%] sn-media-bg">
-                        @if ($product->getFirstMediaUrl('product_image'))
-                            <img src="{{ $product->getFirstMediaUrl('product_image') }}" class="size-full object-cover absolute sn-motion-scale" alt="{{ $product->title }}" loading="lazy" />
+                        @if ($product->mainImageUrl())
+                            <img src="{{ $product->mainImageUrl() }}" class="size-full object-cover absolute sn-motion-scale" alt="{{ $product->title }}" loading="lazy" />
                         @else
                             <div class="sn-image-placeholder absolute inset-0">
                                 <x-filament::icon :icon="\Filament\Support\Icons\Heroicon::OutlinedPhoto" class="w-10 h-10" aria-hidden="true" />

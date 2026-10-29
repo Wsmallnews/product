@@ -44,7 +44,6 @@ class ProductTable
             ])
             ->reorderable('order_column', direction: 'desc')
             ->defaultSort('order_column', 'desc')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['media']))
             ->searchPlaceholder(__('sn-product::product.product_resource.table.search_placeholder'))
             ->filtersFormWidth(Width::Medium)
             ->filters([

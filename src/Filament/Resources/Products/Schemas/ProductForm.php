@@ -3,17 +3,22 @@
 namespace Wsmallnews\Product\Filament\Resources\Products\Schemas;
 
 use Filament\Forms;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Component;
+use Wsmallnews\Media\Filament\Forms\FormComponents as MediaFormComponents;
+use Wsmallnews\Media\Filament\Forms\MediaPicker;
+use Wsmallnews\Product\Enums\ExtraStatus;
 use Wsmallnews\Product\Enums\FormLayout;
 use Wsmallnews\Product\Enums\ProductStatus;
 use Wsmallnews\Product\Enums\ProductStockType;
@@ -55,6 +60,7 @@ class ProductForm
                     ->icon(Heroicon::OutlinedDocumentText)
                     ->schema([
                         Section::make()->schema(static::baseInfoFields())->columns(2),
+                        Section::make('产品图集')->schema(static::galleryInfoFields())->columns(2),
                         Section::make('定时任务')->schema([ScheduledTask::scheduleRepeater('sn_product')])->columns(1),
                     ]),
                 Tab::make('规格库存')
@@ -105,6 +111,7 @@ class ProductForm
                 Group::make()
                     ->schema([
                         Section::make('基础信息')->schema(static::baseInfoFields())->columns(2),
+                        Section::make('产品图集')->schema(static::galleryInfoFields())->columns(2),
                         Section::make('定时任务')->schema([ScheduledTask::scheduleRepeater('sn_product')])->columns(1),
                         Section::make('库存信息')->schema(static::stockInfoFields())->columns(2),
                         Section::make('规格信息')->schema(static::specInfoFields()),
@@ -133,6 +140,7 @@ class ProductForm
                 ->completedIcon(Heroicon::HandThumbUp)
                 ->schema([
                     Section::make('基础信息')->schema(static::baseInfoFields())->columns(2),
+                    Section::make('产品图集')->schema(static::galleryInfoFields())->columns(2),
                     Section::make('定时任务')->schema([ScheduledTask::scheduleRepeater('sn_product')])->columns(1),
                 ]),
             Wizard\Step::make('规格库存')
@@ -162,6 +170,7 @@ class ProductForm
     {
         return [
             Section::make('基础信息')->schema(static::baseInfoFields())->columns(2),
+            Section::make('产品图集')->schema(static::galleryInfoFields())->columns(2),
             Section::make('定时任务')->schema([ScheduledTask::scheduleRepeater('sn_product')])->columns(1),
             Section::make('库存信息')->schema(static::stockInfoFields())->columns(2),
             Section::make('规格信息')->schema(static::specInfoFields()),
@@ -174,7 +183,7 @@ class ProductForm
     // ========================= 字段组合方法 =========================
 
     /**
-     * 基础信息字段（含产品主图与轮播图）
+     * 基础信息字段
      */
     public static function baseInfoFields(): array
     {
@@ -183,6 +192,15 @@ class ProductForm
             static::subtitleField()->columnSpan(2),
             static::statusField()->columnSpan(2),
             static::orderField()->columnSpan(2),
+        ];
+    }
+
+    /**
+     * 产品图集字段（主图 + 分组轮播图，独立成卡与基础信息分离）
+     */
+    public static function galleryInfoFields(): array
+    {
+        return [
             static::imageField()->columnSpan(2),
             static::imagesField()->columnSpan(2),
         ];
@@ -238,7 +256,9 @@ class ProductForm
     public static function extraInfoFields(): array
     {
         return [
-            Forms\Components\Repeater::make('extra_groups')
+            // 挂载组卡：组选择（Select）提升进卡头（headerField），
+            // itemLabel 换成已选选项计数徽标；卡身只剩组内选项表
+            FormComponents::cardsRepeater('extra_groups', 'group_id')
                 ->hiddenLabel()
                 ->schema([
                     // 组选择：同组已在其他行选过则禁选
@@ -249,11 +269,10 @@ class ProductForm
                         ->required()
                         ->live()
                         ->disableOptionsWhenSelectedInSiblingRepeaterItems()
-                        ->afterStateUpdated(fn (Set $set) => $set('options', []))
-                        ->columnSpan(2),
+                        ->afterStateUpdated(fn (Set $set) => $set('options', [])),
 
                     // 组内选项：默认选中 + 覆盖价；支持行内直建（自动归入当前组）
-                    Forms\Components\Repeater::make('options')
+                    Repeater::make('options')
                         ->label(__('sn-product::product.product_form.extra_options'))
                         ->schema([
                             Forms\Components\Select::make('extra_id')
@@ -284,10 +303,9 @@ class ProductForm
                                         'parent_id' => (int) $get('../../group_id'),
                                         'name' => $data['name'],
                                         'price' => $data['price'] ?? 0,
-                                        'status' => \Wsmallnews\Product\Enums\ExtraStatus::Up,
+                                        'status' => ExtraStatus::Up,
                                     ])->getKey();
-                                })
-                                ->columnSpan(2),
+                                }),
 
                             Forms\Components\Toggle::make('is_default')
                                 ->label(__('sn-product::product.product_form.extra_is_default')),
@@ -299,17 +317,23 @@ class ProductForm
                                 ->prefix('￥')
                                 ->rules(['regex:/^\d{1,8}(\.\d{0,2})?$/']),
                         ])
+                        ->table([
+                            TableColumn::make(__('sn-product::product.product_form.extra_option')),
+                            TableColumn::make(__('sn-product::product.product_form.extra_is_default'))->width('6rem'),
+                            FormComponents::hintedTableColumn(
+                                __('sn-product::product.product_form.extra_price_override'),
+                                __('sn-product::product.product_form.extra_price_override_helper'),
+                            )->width('11rem'),
+                        ])
                         ->defaultItems(0)
                         ->addActionLabel(__('sn-product::product.product_form.extra_add_option'))
                         ->reorderable()
-                        ->columns(2)
                         ->columnSpanFull(),
                 ])
                 ->defaultItems(0)
                 ->addActionLabel(__('sn-product::product.product_form.extra_add_group'))
-                ->itemLabel(fn (array $state): ?string => static::extraGroupLabel($state['group_id'] ?? null))
+                ->itemLabel(fn (array $state): string => __('sn-product::product.product_form.extra_option_count', ['count' => count($state['options'] ?? [])]))
                 ->cloneable(false)
-                ->columns(2)
                 ->columnSpanFull(),
         ];
     }
@@ -317,13 +341,13 @@ class ProductForm
     /**
      * 附加项库组（仅上架，scope 隔离；组选择器数据源）。
      */
-    protected static function extraGroupOptions(\Livewire\Component $livewire): array
+    protected static function extraGroupOptions(Component $livewire): array
     {
         $extraModel = Utils::getExtraModel();
 
         return $extraModel::query()
             ->where('parent_id', 0)
-            ->where('status', \Wsmallnews\Product\Enums\ExtraStatus::Up)
+            ->where('status', ExtraStatus::Up)
             ->where($livewire::getScopeable())
             ->orderBy('order_column')->orderBy('id')
             ->pluck('name', 'id')
@@ -343,26 +367,11 @@ class ProductForm
         }
 
         return $group->children()
-            ->where('status', \Wsmallnews\Product\Enums\ExtraStatus::Up)
+            ->where('status', ExtraStatus::Up)
             ->orderBy('order_column')->orderBy('id')
             ->get()
             ->mapWithKeys(fn ($option) => [$option->id => $option->name . '（' . sn_money()->decimal($option->price) . '）'])
             ->all();
-    }
-
-    /**
-     * 组行折叠标签（组名；未选时 null 显示占位）。
-     */
-    protected static function extraGroupLabel(?int $groupId): ?string
-    {
-        if (blank($groupId)) {
-            return null;
-        }
-
-        $extraModel = Utils::getExtraModel();
-        $group = $extraModel::query()->find($groupId);
-
-        return $group?->name;
     }
 
     /**
@@ -420,38 +429,29 @@ class ProductForm
     }
 
     /**
-     * 产品主图
+     * 产品主图（media 值对象，正方形大触发器：+ 图标 +「选择图片」文案）
      */
-    public static function imageField(): Forms\Components\FileUpload
+    public static function imageField(): MediaPicker
     {
-        return FormComponents::mediaImageUpload('product_image', 'product_image')
+        return MediaPicker::make('image')
             ->label('产品主图')
-            ->required()
-            ->customProperties(function (Component $livewire) {
-                return [
-                    ...$livewire::getScopeable(),
-                    'team_id' => current_tenant()?->id,
-                ];
-            })
-            ->uploadingMessage('产品主图上传中...');
+            // 落盘目录（Filament 原生上传与 media 管道共用；日期由 getFileDirectory 补齐）
+            ->directory(Utils::getFileDirectory('products'))
+            ->acceptImages()
+            ->ratio(1)
+            ->required();
     }
 
     /**
-     * 产品轮播图
+     * 产品轮播图（分组图集编辑器：repeater 直连 images 字段，组内多图）。
      */
-    public static function imagesField(): Forms\Components\FileUpload
+    public static function imagesField(): Repeater
     {
-        return FormComponents::mediaImageUpload('product_images', 'product_images')
-            ->label('产品轮播图')
-            ->customProperties(function (Component $livewire) {
-                return [
-                    ...$livewire::getScopeable(),
-                    'team_id' => current_tenant()?->id,
-                ];
-            })
-            ->multiple()
-            ->minFiles(1)
-            ->uploadingMessage('产品轮播图上传中...');
+        return MediaFormComponents::groupedMediaGallery('images', '产品轮播图', fn (MediaPicker $picker): MediaPicker => $picker
+            ->directory(Utils::getFileDirectory('products'))
+            ->acceptImages()
+            ->ratio(1)
+            ->triggerSize(96));
     }
 
     /**

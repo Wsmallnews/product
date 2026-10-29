@@ -27,7 +27,8 @@ class Product implements SummaryPipeInterface
             $buyInfo['relate_id'] = $product->id;
             $buyInfo['relate_title'] = $product->title;
             $buyInfo['relate_subtitle'] = $product->subtitle ?? '';
-            $buyInfo['relate_image'] = $currentVariant->image ?: $product->getFirstMediaUrl('product_image');
+            // 快照链路不变：变体图优先，回落到产品主图（media 值对象解析为 URL）
+            $buyInfo['relate_image'] = $currentVariant->image ?: $product->mainImageUrl();
 
             // 属性集合 = 入参携带的属性（购物车加的小料等）+ 规格值（空值剔除）
             $buyInfo['relate_attributes'] = array_values(array_filter([
