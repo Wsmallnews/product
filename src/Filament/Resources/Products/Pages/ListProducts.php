@@ -8,7 +8,6 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
 use Wsmallnews\Product\Enums\ProductStatus;
 use Wsmallnews\Product\Filament\Resources\Products\ProductResource;
-use Wsmallnews\Product\Support\Utils;
 use Wsmallnews\Support\Filament\Resources\Concerns\Pages\Scopeable;
 
 class ListProducts extends ListRecords
@@ -26,35 +25,25 @@ class ListProducts extends ListRecords
 
     public function getTabs(): array
     {
-        return [
+        $tabs = [
             'all' => Tab::make()
-                ->label('全部')
-                ->badge(fn () => $this->getCount()),
-            'up' => Tab::make()
-                ->label(ProductStatus::Up->getLabel())
-                ->badge(fn () => $this->getCount(ProductStatus::Up))
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', ProductStatus::Up)),
-            'down' => Tab::make()
-                ->label(ProductStatus::Down->getLabel())
-                ->badge(fn () => $this->getCount(ProductStatus::Down))
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', ProductStatus::Down)),
-            'hidden' => Tab::make()
-                ->label(ProductStatus::Hidden->getLabel())
-                ->badge(fn () => $this->getCount(ProductStatus::Hidden))
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', ProductStatus::Hidden)),
-            'draft' => Tab::make()
-                ->label(ProductStatus::Draft->getLabel())
-                ->badge(fn () => $this->getCount(ProductStatus::Draft))
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', ProductStatus::Draft)),
+                ->label(__('sn-product::product.product_resource.tabs.all'))
+                ->badge(fn (): int => $this->getCount()),
         ];
+
+        foreach (ProductStatus::cases() as $status) {
+            $tabs[$status->value] = Tab::make()
+                ->label($status->getLabel())
+                ->badge(fn (): int => $this->getCount($status))
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', $status));
+        }
+
+        return $tabs;
     }
 
     protected function getCount(?ProductStatus $status = null): int
     {
-        $query = Utils::getProductModel()::query()->snScope(
-            static::getScopeType(),
-            static::getScopeId(),
-        );
+        $query = static::getResource()::getEloquentQuery()->withoutTrashed();
 
         if ($status) {
             $query->where('status', $status);

@@ -32,6 +32,9 @@ return [
         'model_label' => '产品',
         'plural_model_label' => '产品',
         'navigation_label' => '产品管理',
+        'tabs' => [
+            'all' => '全部',
+        ],
         'table' => [
             'status' => '状态',
             'search_placeholder' => '搜索产品标题',

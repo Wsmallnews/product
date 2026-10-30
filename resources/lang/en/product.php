@@ -32,6 +32,9 @@ return [
         'model_label' => 'Product',
         'plural_model_label' => 'Products',
         'navigation_label' => 'Product Management',
+        'tabs' => [
+            'all' => 'All',
+        ],
         'table' => [
             'status' => 'Status',
             'search_placeholder' => 'Search product titles',
